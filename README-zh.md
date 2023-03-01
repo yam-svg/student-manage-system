@@ -1,1 +1,1 @@
-可进入fanshu.xyz进行在线访问本项目
+可进入 http://fanshu.xyz 进行在线访问本项目
