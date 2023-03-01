@@ -41,7 +41,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <!--添加教师对话框-->
+    <!--添加/更新教师对话框-->
     <el-dialog :title="form.id ? '编辑教师' : '添加教师'" :visible.sync="dialogVisible" :before-close="closeDialog">
       <el-form ref="form" label-width="100px" :model="form" :rules="rule">
         <el-form-item label="姓名" prop="name">
@@ -54,7 +54,7 @@
           <el-input v-model.trim="form.phone" clearable size="mini" placeholder="请输入教师联系电话" />
         </el-form-item>
         <el-form-item label="担任班主任" prop="class_id">
-          <el-select v-model="form.class_id" size="mini" placeholder="非必选">
+          <el-select v-model="form.class_id" clearable size="mini" placeholder="非必选">
             <el-option v-for="item in classList" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -75,6 +75,7 @@
 
 <script>
 import teacherApi from '@/api/teacher'
+import classApi from '@/api/class'
 import { mapState } from 'vuex'
 
 export default {
@@ -152,6 +153,12 @@ export default {
         if (valid) {
           let res
           if (this.form.id) {
+            // 去除空字段
+            for (const key in this.form) {
+              if (this.form[key] === '') {
+                this.form[key] = null
+              }
+            }
             res = await teacherApi.updateTeacher(this.form)
           } else {
             res = await teacherApi.addTeacher(this.form)
@@ -160,6 +167,8 @@ export default {
             type: 'success',
             message: res.msg
           })
+          // 更新class表中的班主任
+          await classApi.updateTeacherName()
           this.dialogVisible = false
           this.getTeacherList()
         }
@@ -168,7 +177,7 @@ export default {
     // 编辑教师
     editTeacher(row) {
       this.dialogVisible = true
-      this.form = row
+      this.form = JSON.parse(JSON.stringify(row))
     },
     // 删除教师
     async deleteTeacher(row) {

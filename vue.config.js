@@ -6,7 +6,7 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || 'vue Admin Template' // page title
+const name = defaultSettings.title || '管理系统' // page title
 
 const port = process.env.port || process.env.npm_config_port || 9528 // dev port
 
@@ -22,7 +22,17 @@ module.exports = {
     overlay: {
       warnings: false,
       errors: true
-    },
+    }
+    // proxy: { // 配置跨域
+    //   '/apis': {
+    //     target: 'http://myip.ipip.net/', // 搜狐的域名
+    //     ws: true,
+    //     changOrigin: true, // 允许跨域
+    //     pathRewrite: {
+    //       '^/apis': ''// 请求的时候使用这个api就可以
+    //     }
+    //   }
+    // }
   },
   configureWebpack: {
     name: name,
@@ -67,7 +77,7 @@ module.exports = {
             .plugin('ScriptExtHtmlWebpackPlugin')
             .after('html')
             .use('script-ext-html-webpack-plugin', [{
-            // `runtime` must same as runtimeChunk name. default is `runtime`
+              // `runtime` must same as runtimeChunk name. default is `runtime`
               inline: /runtime\..*\.js$/
             }])
             .end()

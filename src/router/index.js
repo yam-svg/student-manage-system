@@ -27,7 +27,7 @@ export const constantRoutes = [
       path: 'dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
-      meta: { title: '首页', icon: 'dashboard' }
+      meta: { title: '数据总览', icon: 'dashboard' }
     }]
   },
 
@@ -37,38 +37,65 @@ export const constantRoutes = [
     component: Layout,
     redirect: '/student/list',
     name: 'Vod',
-    meta: { title: '学生管理', icon: 'el-icon-s-help' },
+    meta: { title: '学生管理', icon: 'el-icon-s-order' },
     children: [
       {
         path: 'list',
         name: 'StudentList',
         component: () => import('@/views/student/list'),
-        meta: { title: '学生列表', icon: 'table' }
+        meta: { title: '学生列表', icon: 'el-icon-user' }
       },
       {
         path: 'add',
         name: 'AddStudent',
         component: () => import('@/views/student/add'),
-        meta: { title: '添加学生', icon: 'table' }
+        meta: { title: '添加学生', icon: 'el-icon-circle-plus-outline' }
       },
       {
         path: 'edit/:id',
         name: 'EditStudent',
         hidden: true,
         component: () => import('@/views/student/add'),
-        meta: { title: '编辑', icon: 'table' }
+        meta: { title: '编辑', icon: 'el-icon-edit' }
       },
       {
         path: 'graduated',
         name: 'Graduated',
         component: () => import('@/views/student/list'),
-        meta: { title: '毕业学生', icon: 'table' }
+        meta: { title: '毕业学生', icon: 'el-icon-switch-button\n' }
       },
       {
         path: 'recovery',
         name: 'Recovery',
         component: () => import('@/views/student/list'),
-        meta: { title: '误删恢复', icon: 'table' }
+        meta: { title: '误删恢复', icon: 'el-icon-refresh' }
+      }
+    ]
+  },
+
+  // 成绩管理
+  {
+    path: '/course',
+    component: Layout,
+    redirect: '/course/list',
+    name: 'Course',
+    meta: { title: '成绩管理', icon: 'el-icon-star-on' },
+    children: [
+      {
+        path: 'list',
+        name: 'CourseList',
+        component: () => import('@/views/course/list'),
+        meta: { title: '成绩列表', icon: 'el-icon-document' }
+      }, {
+        path: 'add',
+        name: 'AddCourse',
+        component: () => import('@/views/course/add'),
+        meta: { title: '成绩录入', icon: 'el-icon-thumb' }
+      }, {
+        path: 'test',
+        name: 'TestManage',
+        component: () => import('@/views/course/test'),
+        meta: { title: '考试管理', icon: 'el-icon-help' }
       }
     ]
   },
@@ -83,7 +110,7 @@ export const constantRoutes = [
       path: 'list',
       name: 'ClassList',
       component: () => import('@/views/class/list'),
-      meta: { title: '班级列表', icon: 'table' }
+      meta: { title: '班级列表', icon: 'el-icon-s-data' }
     }]
   },
 
@@ -97,32 +124,94 @@ export const constantRoutes = [
       path: 'list',
       name: 'TeacherList',
       component: () => import('@/views/teacher/index'),
-      meta: { title: '教师列表', icon: 'table' }
+      meta: { title: '教师列表', icon: 'el-icon-s-custom' }
     }]
   },
+
+  // 疫情管理
+  {
+    path: '/epidemic',
+    component: Layout,
+    redirect: '/Epidemic',
+    meta: { title: '疫情管理', icon: 'el-icon-chat-round' },
+    children: [{
+      path: 'list',
+      name: 'EpidemicList',
+      component: () => import('@/views/epidemic/index'),
+      meta: { title: '疫情管理', icon: 'el-icon-warning' }
+    }]
+  },
+
   // 系统设置
   {
     path: '/system',
     component: Layout,
     redirect: '/system/setting',
-    meta: { title: '系统设置', icon: 'el-icon-s-help' },
+    meta: { title: '系统设置', icon: 'el-icon-s-tools' },
     children: [{
       path: 'setting',
       name: 'SystemSetting',
       component: () => import('@/views/setting/password'),
-      meta: { title: '修改密码', icon: 'table' }
+      meta: { title: '修改密码', icon: 'el-icon-lock' }
     }, {
       path: 'recover',
       name: 'SystemRecover',
       component: () => import('@/views/setting/recover'),
-      meta: { title: '找回密码', icon: 'table' }
+      meta: { title: '找回密码', icon: 'el-icon-unlock' }
     }, {
       path: 'change',
       name: 'SystemChange',
       component: () => import('@/views/setting/change'),
-      meta: { title: '更换邮箱', icon: 'table' }
+      meta: { title: '更换邮箱', icon: 'el-icon-message' }
+    }, {
+      path: 'ip',
+      name: 'Ip',
+      component: () => import('@/views/setting/ip'),
+      meta: { title: '登录记录', icon: 'el-icon-location-outline' }
     }
     ]
+  },
+
+  // 其他项目
+  {
+    path: '/other',
+    component: Layout,
+    redirect: '/other/setting',
+    meta: { title: '其他项目', icon: 'el-icon-medal-1' },
+    children: [{
+      path: 'sph',
+      component: () => import('@/views/other/index'),
+      meta: { title: '购物商城', icon: 'el-icon-goods' }
+    }, {
+      path: 'sphBack',
+      component: () => import('@/views/other/index'),
+      meta: { title: '商城管理', icon: 'el-icon-brush' }
+    }, {
+      path: 'guigu',
+      component: () => import('@/views/other/index'),
+      meta: { title: '硅谷课堂', icon: 'el-icon-video-camera' }
+    }, {
+      path: 'tank',
+      component: () => import('@/views/other/index'),
+      meta: { title: '坦克大战', icon: 'el-icon-coordinate' }
+    }, {
+      path: 'gitee',
+      component: () => import('@/views/other/index'),
+      meta: { title: '仓库地址', icon: 'el-icon-receiving' }
+    }
+    ]
+  },
+  // chatGPT特别页面
+  {
+    path: '/chatGPT',
+    component: () => import('@/views/chatGPT/index'),
+    meta: { title: 'chatGPT', icon: 'el-icon-chat-round' }
+  },
+  // 留言
+  {
+    path: '/message',
+    component: () => import('@/views/message/index'),
+    meta: { title: '留言', icon: 'el-icon-eleme' }
   },
 
   // 404 page must be placed at the end !!!

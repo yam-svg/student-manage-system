@@ -3,7 +3,7 @@
     <!--工具条-->
     <el-form ref="form" label-width="80px" inline>
       <el-form-item label="班级列表">
-        <el-button type="primary" @click="openDialog">添加班级</el-button>
+        <el-button type="primary" size="mini" @click="openDialog">添加班级</el-button>
       </el-form-item>
     </el-form>
     <!--数据表格-->
@@ -126,7 +126,7 @@ export default {
     updateClass() {
       this.dialogVisible = false
       // 添加老师名称字段
-      this.classInfo.master_name = this.teacherList.find(item => item.id === this.classInfo.master_id).name
+      this.classInfo.master_name = this.teacherList.find(item => item.id === this.classInfo.master_id)?.name
       classApi.updateClass(this.classInfo).then(res => {
         this.$message.success(res.msg)
         this.$store.dispatch('classL/getClassList')

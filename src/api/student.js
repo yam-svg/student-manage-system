@@ -87,6 +87,20 @@ export default {
       data,
       responseType: 'blob'
     })
+  },
+  // 获取男女比例
+  getGenderRatio() {
+    return request({
+      url: `${BASE_API}/getGenderRatio`,
+      method: 'get'
+    })
+  },
+  // 获取各个学生所在的省份 用于数据可视化
+  getProvince() {
+    return request({
+      url: `${BASE_API}/getProvince`,
+      method: 'get'
+    })
   }
 }
 

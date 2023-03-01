@@ -6,7 +6,8 @@
         <el-button v-if="isStudentList" size="mini" type="primary" @click="$router.push('add')">添加学生</el-button>
       </el-form-item>
       <el-form-item>
-        <el-button v-if="isStudentList || isGraduateList" size="mini" type="danger" @click="batchRemove">批量删除</el-button>
+        <el-button v-if="isStudentList || isGraduateList" size="mini" type="danger" @click="batchRemove">批量删除
+        </el-button>
         <el-button v-if="isRecycleList" type="success" size="mini" @click="batchRecovery">批量恢复</el-button>
         <el-button v-if="isRecycleList" type="danger" size="mini" @click="batchDelDeep">批量彻底删除</el-button>
       </el-form-item>
@@ -33,7 +34,8 @@
           placeholder="开始日期"
           value-format="yyyy-MM-dd"
           style="width: 150px"
-        /> -
+        />
+        -
         <el-date-picker
           v-model="searchForm.endTime"
           type="date"
@@ -120,7 +122,16 @@
         <el-form-item label="选择需要导出的表头, 请安顺序点击, 否则导出的表格顺序不对">
           <el-checkbox-group v-model="chooseTag">
             <el-checkbox v-for="(item, index) in excelTag" :key="item.key" :checked="item.checked" :label="item">
-              <el-input v-show="currentIndex === index" ref="titleInput" v-model="item.label" class="title-input" :style="{width: inputWidth + 'em'}" size="mini" @input="inputWidth = $event.length + 1" @blur="closeEdit" />
+              <el-input
+                v-show="currentIndex === index"
+                ref="titleInput"
+                v-model="item.label"
+                class="title-input"
+                :style="{width: inputWidth + 'em'}"
+                size="mini"
+                @input="inputWidth = $event.length + 1"
+                @blur="closeEdit"
+              />
               <span v-show="currentIndex !== index">{{ item.label }}</span>
               <i class="el-icon-edit" @click.prevent="changeStatus($event, index)" />
             </el-checkbox>
@@ -148,7 +159,7 @@
         ref="upload"
         class="upload-demo"
         drag
-        action="http://localhost:8080/api/student/importExcel"
+        action="http://fanshu.xz:8080/api/student/importExcel"
         :auto-upload="false"
         :on-success="handleSuccess"
         :before-upload="beforeAvatarUpload"
@@ -186,8 +197,12 @@ export default {
         name: '',
         class: '',
         startTime: '',
-        endTime: ''
+        endTime: '',
+        sex: '',
+        address: ''
       },
+      // 跳转过来的查询参数
+      dashboardParams: {},
       // 批量删除的学生id
       ids: [],
       dialogVisible: false,
@@ -320,12 +335,37 @@ export default {
     } else {
       this.status = 2
     }
+    // 获取首页传过来的查询参数
+    this.dashboardParams = this.$route.query
+    // 1 班级 2 性别 3 省市区
+    const type = this.dashboardParams.type
+    if (type === 1) {
+      // 班级
+      if (this.dashboardParams.name) {
+        this.searchForm.class = this.getClassId(this.dashboardParams.name)
+      }
+    } else if (type === 2) {
+      // 性别
+      if (this.dashboardParams.name) {
+        this.searchForm.sex = this.dashboardParams.name
+      }
+    } else if (type === 3) {
+      // 省市区
+      if (this.dashboardParams.name) {
+        this.searchForm.address = this.dashboardParams.name
+      }
+    }
+    // 获取学生列表
     this.getStudentList()
   },
   methods: {
     // 获取学生列表
     getStudentList() {
-      studentApi.getStudentList({ status: this.status, page: this.page, pageSize: this.limit }, this.searchForm).then(res => {
+      studentApi.getStudentList({
+        status: this.status,
+        page: this.searchForm?.name?.length > 0 ? 1 : this.page,
+        pageSize: this.limit
+      }, this.searchForm).then(res => {
         this.studentList = res.data
         this.total = res.total
       }).catch()
@@ -668,6 +708,16 @@ export default {
     handleCurrentChange(page) {
       this.page = page
       this.getStudentList()
+    },
+    // 根据班级名称获取班级id
+    getClassId(className) {
+      let classId = ''
+      this.classList.forEach(item => {
+        if (item.name === className) {
+          classId = item.id
+        }
+      })
+      return classId
     }
   }
 }

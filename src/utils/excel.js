@@ -1,32 +1,45 @@
 import * as XLSX from 'xlsx'
 import XLSXStyle from 'xlsx-style'
 
-export function createWs(data, fields, titles) {
+export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导出
   const ws = XLSX.utils.json_to_sheet(data, {
     header: fields
   })
   // 根据表头字段设置列宽
   const wsWidth = []
-  // 相同宽度的字段
-  const sampleWidth1 = ['index', 'sex', 'age', 'class'] // 65
-  const sampleWidth2 = ['name', 'father_name', 'remark'] // 100
-  const sampleWidth3 = ['father_tel', 'create_time'] // 120
-  const sampleWidth4 = ['address'] // 280
-  const sampleWidth5 = ['id_number'] // 150
-  // 设置列宽
-  fields.forEach((item) => {
-    if (sampleWidth1.includes(item)) {
-      wsWidth.push({ wpx: 65 })
-    } else if (sampleWidth2.includes(item)) {
-      wsWidth.push({ wpx: 100 })
-    } else if (sampleWidth3.includes(item)) {
-      wsWidth.push({ wpx: 120 })
-    } else if (sampleWidth4.includes(item)) {
-      wsWidth.push({ wpx: 280 })
-    } else if (sampleWidth5.includes(item)) {
-      wsWidth.push({ wpx: 150 })
-    }
-  })
+  if (type === 2) {
+    // 设置列宽
+    fields.forEach((item) => {
+      if (item === 'index') {
+        wsWidth.push({ wpx: 65 })
+      } else if (item === 'name') {
+        wsWidth.push({ wpx: 100 })
+      } else {
+        wsWidth.push({ wpx: 65 })
+      }
+    })
+  } else {
+    // 相同宽度的字段
+    const sampleWidth1 = ['index', 'sex', 'age', 'class'] // 65
+    const sampleWidth2 = ['name', 'father_name', 'remark'] // 100
+    const sampleWidth3 = ['father_tel', 'create_time'] // 120
+    const sampleWidth4 = ['address'] // 280
+    const sampleWidth5 = ['id_number'] // 150
+    // 设置列宽
+    fields.forEach((item) => {
+      if (sampleWidth1.includes(item)) {
+        wsWidth.push({ wpx: 65 })
+      } else if (sampleWidth2.includes(item)) {
+        wsWidth.push({ wpx: 100 })
+      } else if (sampleWidth3.includes(item)) {
+        wsWidth.push({ wpx: 120 })
+      } else if (sampleWidth4.includes(item)) {
+        wsWidth.push({ wpx: 280 })
+      } else if (sampleWidth5.includes(item)) {
+        wsWidth.push({ wpx: 150 })
+      }
+    })
+  }
 
   // 设置表格的宽度
   ws['!cols'] = wsWidth

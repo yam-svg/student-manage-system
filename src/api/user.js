@@ -69,3 +69,46 @@ export function updateEmail(data) {
     data
   })
 }
+
+// 保存登录日志
+export function saveLoginLog(data) {
+  return request({
+    url: `${BASE_API}/saveLoginLog`,
+    method: 'post',
+    data
+  })
+}
+
+// 获取登录日志
+export function getLoginLog(data) {
+  return request({
+    url: `${BASE_API}/getLoginLog`,
+    method: 'get',
+    params: data
+  })
+}
+
+// 获取近七天登录数据
+export function getSevenDaysLoginLog() {
+  return request({
+    url: `${BASE_API}/getLoginData`,
+    method: 'get'
+  })
+}
+
+// 获取ip信息
+export function getIpInfo() {
+  return request({
+    url: `${BASE_API}/getIpInfo`,
+    method: 'get'
+  })
+}
+
+// 留言
+export function leaveMessage(data) {
+  return request({
+    url: `${BASE_API}/message`,
+    method: 'post',
+    data
+  })
+}

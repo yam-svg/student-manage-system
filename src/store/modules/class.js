@@ -19,6 +19,27 @@ export default {
   },
   state: {
     // 班级列表
-    classList: []
+    classList: [],
+    // 所有班级的总人数
+    total: 0
+  },
+  getters: {
+    // 班级总人数
+    total(state) {
+      return state.classList.reduce((pre, item) => pre + item.student, 0).toString() || '获取中'
+    },
+    // 各班人数
+    classCount(state) {
+      return state.classList.map(item => item.student)
+    },
+    // 各班占比
+    classPercent(state) {
+      return state.classList.map(item => {
+        return {
+          name: item.name,
+          percent: item.student / state.classList.reduce((pre, item) => pre + item.student, 0)
+        }
+      })
+    }
   }
 }

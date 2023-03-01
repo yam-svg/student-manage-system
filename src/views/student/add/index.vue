@@ -32,7 +32,19 @@
         <el-input v-model.trim="student.father_tel" />
       </el-form-item>
       <el-form-item label="住址" prop="address">
-        <el-input v-model.number.trim="student.address" />
+        <!--地区选择器-->
+        <el-cascader
+          v-model="selectedOptions"
+          style="width: 25%;"
+          size="large"
+          :options="options"
+          @change="handleChange">
+        </el-cascader>
+        <!--详细地址-->
+        <span> 详细地址: </span>
+        <el-input v-model.trim="tempAddress" :disabled="!selectAddress" @input="bindAddress"/>
+        <br>
+        <el-input :value="student.address" size="mini" disabled placeholder="详细住址"></el-input>
       </el-form-item>
       <el-form-item label="身份证号码" prop="id_number">
         <el-input v-model.trim="student.id_number" @input="getSex" />
@@ -40,7 +52,7 @@
       <el-form-item label="头像">
         <el-upload
           class="avatar-uploader"
-          action="http://127.0.0.1:8080/api/student/upload/avatar"
+          action="http://fanshu.xyz:8080/api/student/upload/avatar"
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
           :before-upload="beforeAvatarUpload"
@@ -59,6 +71,7 @@
 <script>
 import studentApi from '@/api/student'
 import { mapState } from 'vuex'
+import { regionData, CodeToText } from 'element-china-area-data'
 
 export default {
   name: 'AddStudent',
@@ -68,7 +81,7 @@ export default {
         avatar: '',
         name: '',
         sex: '男',
-        class: 0,
+        class: 1,
         father_name: '',
         father_tel: '',
         id_number: '',
@@ -106,11 +119,45 @@ export default {
         remark: [
           { required: true, message: '请选择', trigger: 'blur' }
         ]
-      }
+      },
+      // 地区选择器选项
+      options: regionData,
+      // 地区选择器选中的值
+      selectedOptions: [],
+      selectAddress: '',
+      // 详细地址
+      tempAddress: ''
     }
   },
   computed: {
     ...mapState('classL', ['classList'])
+  },
+  beforeMount() {
+    // if (!this.$route.params.id) {
+    //   // 提示信息 是否自动随机添加学生
+    //   this.$confirm('是否自动随机添加学生', '提示', {
+    //     confirmButtonText: '确定',
+    //     cancelButtonText: '取消',
+    //     type: 'warning'
+    //   }).then(() => {
+    //     // 点击确定
+    //     for (let i = 0; i < 30; i++) {
+    //       axios.get('http://127.0.0.1:4523/mock/2322579/get/studentlist').then(res => {
+    //         this.student = res.data
+    //         studentApi.addStudent(this.student).then(res => {
+    //           if (res.code === 20000) {
+    //             this.$message.success(res.msg)
+    //           }
+    //         }).catch(err => {
+    //           console.log(err)
+    //         })
+    //       })
+    //     }
+    //   }).catch(() => {
+    //     // 点击取消
+    //     this.$message.info('取消')
+    //   })
+    // }
   },
   mounted() {
     if (this.$route.params.id) {
@@ -184,6 +231,20 @@ export default {
       // }
       // return isJPG && isLt2M;
       return true
+    },
+    // 地区选择器回调
+    handleChange() {
+      let loc = ''
+      for (let i = 0; i < this.selectedOptions.length; i++) {
+        loc += CodeToText[this.selectedOptions[i]] + ' '
+      }
+      this.selectAddress = loc + this.tempAddress
+      this.student.address = this.selectAddress
+    },
+    // 合并地址
+    bindAddress() {
+      const temp = this.selectAddress || this.student.address
+      this.student.address = temp + this.tempAddress
     }
   }
 }
@@ -215,5 +276,9 @@ export default {
   width: 178px;
   height: 178px;
   display: block;
+}
+/*el-input的长度*/
+.el-input {
+  width: 400px;
 }
 </style>

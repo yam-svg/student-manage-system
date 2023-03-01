@@ -2,7 +2,7 @@ import request from '@/utils/request'
 const BASE_API = '/class'
 
 export default {
-  // 添加学生
+  // 获取班级列表
   getClassList() {
     return request({
       url: `${BASE_API}/getClassList`,
@@ -30,6 +30,13 @@ export default {
     return request({
       url: `${BASE_API}/deleteClass/${id}`,
       method: 'delete'
+    })
+  },
+  // 更新班级中老师的名字
+  updateTeacherName() {
+    return request({
+      url: `${BASE_API}/updateTeacherName`,
+      method: 'get'
     })
   }
 }
