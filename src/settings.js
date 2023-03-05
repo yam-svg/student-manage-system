@@ -1,6 +1,6 @@
 module.exports = {
 
-  title: '管理系统',
+  title: '毕业设计',
 
   /**
    * @type {boolean} true | false

@@ -141,6 +141,19 @@ export const constantRoutes = [
       meta: { title: '疫情管理', icon: 'el-icon-warning' }
     }]
   },
+  // 学生档案
+  {
+    path: '/portfolio',
+    component: Layout,
+    redirect: '/Epidemic',
+    meta: { title: '学生档案', icon: 'el-icon-s-flag' },
+    children: [{
+      path: 'list',
+      name: 'PortfolioList',
+      component: () => import('@/views/portfolio/index'),
+      meta: { title: '学生档案', icon: 'el-icon-finished' }
+    }]
+  },
 
   // 系统设置
   {
@@ -203,9 +216,17 @@ export const constantRoutes = [
   },
   // chatGPT特别页面
   {
-    path: '/chatGPT',
-    component: () => import('@/views/chatGPT/index'),
-    meta: { title: 'chatGPT', icon: 'el-icon-chat-round' }
+    path: '/open',
+    component: Layout,
+    meta: { title: 'chatGPT', icon: 'el-icon-chat-round' },
+    hidden: true,
+    children: [
+      {
+        path: '/chatGPT',
+        component: () => import('@/views/chatGPT/index'),
+        meta: { title: 'chatGPT', icon: 'el-icon-chat-round' }
+      }
+    ]
   },
   // 留言
   {

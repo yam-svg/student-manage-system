@@ -1,13 +1,12 @@
 <template>
   <div id="app">
-    <router-view/>
+    <router-view />
   </div>
 </template>
 
 <script>
-import { saveLoginLog } from '@/api/user'
+import { getIpInfo, saveLoginLog } from '@/api/user'
 import axios from 'axios'
-import { getIpInfo } from '@/api/user'
 
 export default {
   name: 'App',
@@ -26,7 +25,7 @@ export default {
       axios.get('https://ipapi.co/' + this.ip.ip + '/json/').then(res => {
         this.ip.city = res.data.city || '未知'
         if (this.ip.city !== '未知') {
-          saveLoginLog(this.ip).then(res => {
+          saveLoginLog(this.ip).then(() => {
           })
         }
       })

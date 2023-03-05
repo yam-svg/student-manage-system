@@ -8,7 +8,7 @@ export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导�
   // 根据表头字段设置列宽
   const wsWidth = []
   if (type === 2) {
-    // 设置列宽
+    // 成绩 设置列宽
     fields.forEach((item) => {
       if (item === 'index') {
         wsWidth.push({ wpx: 65 })
@@ -18,8 +18,27 @@ export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导�
         wsWidth.push({ wpx: 65 })
       }
     })
+  } else if (type === 3) {
+    // 核酸数据 导出设置列宽
+    fields.forEach((item) => {
+      if (item === 'index') {
+        wsWidth.push({ wpx: 40 })
+      } else if (item === 'name') {
+        wsWidth.push({ wpx: 80 })
+      } else if (item === 'class') {
+        wsWidth.push({ wpx: 60 })
+      } else if (item === 'health_code' || item === 'stroke_code' || item === 'detection_result' || item === 'at_school' || item === 'reason' || item === 'reason') {
+        wsWidth.push({ wpx: 70 })
+      } else if (item === 'father_tel' || item === 'is_detection' || item === 'detection_time') {
+        wsWidth.push({ wpx: 130 })
+      } else if (item === 'address') {
+        wsWidth.push({ wpx: 280 })
+      } else {
+        wsWidth.push({ wpx: 120 })
+      }
+    })
   } else {
-    // 相同宽度的字段
+    // 学生信息 相同宽度的字段
     const sampleWidth1 = ['index', 'sex', 'age', 'class'] // 65
     const sampleWidth2 = ['name', 'father_name', 'remark'] // 100
     const sampleWidth3 = ['father_tel', 'create_time'] // 120
