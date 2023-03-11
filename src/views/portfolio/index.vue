@@ -25,18 +25,22 @@
       <el-form-item label="学生姓名">
         <el-input v-model="searchForm.name" clearable size="mini" placeholder="学生姓名" @change="getStudentList" />
       </el-form-item>
+      <el-form-item v-if="studentInfo.id" style="float: right">
+        <el-avatar :size="65" shape="square" :src="studentInfo.avatar" />
+      </el-form-item>
     </el-form>
     <!--内容-->
     <el-descriptions
       v-if="studentInfo.id"
       class="margin-top"
+      style="margin-top: 40px"
       :title="studentInfo.name + ' - 个人信息'"
       :column="3"
       size="large"
       border
     >
       <template slot="extra">
-        <el-button type="primary" size="mini" @click="exportPDF">导出PDF</el-button>
+        <el-button type="warning" size="mini" @click="exportPDF">导出PDF</el-button>
       </template>
       <el-descriptions-item label-style="height: 20px">
         <template slot="label">
@@ -57,11 +61,7 @@
           <i class="el-icon-apple" />
           头像
         </template>
-        <el-image
-          style="width: 100px; height: 100px"
-          :src="studentInfo.avatar || 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'"
-          fit="cover"
-        />
+        右上角
       </el-descriptions-item>
       <el-descriptions-item>
         <template slot="label">
@@ -132,7 +132,7 @@
       v-if="studentInfo.id"
       class="margin-top score-list"
       style="margin-top: 20px"
-      title="各科平均分"
+      title="最新考试成绩"
       direction="vertical"
       :column="11"
       size="large"
@@ -150,24 +150,64 @@
         </div>
       </el-descriptions-item>
     </el-descriptions>
+    <!--数据分析-->
+    <el-descriptions
+      v-if="studentInfo.id"
+      class="margin-top score-list"
+      style="margin-top: 20px"
+      title="数据分析"
+      direction="vertical"
+      size="large"
+      :colon="false"
+      border
+    >
+      <el-descriptions-item label-style="width: 45%">
+        <template slot="label">
+          <div class="score-list">
+            同省市人数
+          </div>
+        </template>
+        <div class="chart-pos">
+          <barChart ref="barChart" :province-list="provinceList" :address="studentInfo.address.split(' ')[0]" @getChart="getChart" />
+        </div>
+      </el-descriptions-item>
+      <el-descriptions-item label-style="width: 55%">
+        <template slot="label">
+          <div class="score-list">
+            成绩分析
+          </div>
+        </template>
+        <div class="chart-pos">
+          <pieChart ref="pieChart" style="width: 40%" :score-list="scoreList" @getChart="getChart" />
+          <scatterChart ref="scatterChart" style="width: 35%" :score-list="scoreList" @getChart="getChart" />
+          <rankChart ref="rankChart" style="width: 25%" :student-info="studentInfo" :total="studentList.length" @getChart="getChart" />
+        </div>
+      </el-descriptions-item>
+    </el-descriptions>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import studentApi from '@/api/student'
-import { getStudentScore } from '@/api/course'
+import { getStudentRank, getStudentScore } from '@/api/course'
 import dayjs from 'dayjs'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
+import barChart from './barChart/index'
+import pieChart from '@/views/portfolio/pieChart'
+import rankChart from '@/views/portfolio/rankChart'
+import scatterChart from '@/views/portfolio/scatterChart'
+import _ from 'lodash'
 
 export default {
   name: 'Portfolio',
+  components: { barChart, pieChart, rankChart, scatterChart },
   data() {
     return {
       // 搜索条件
       searchForm: {
-        class: 2,
+        class: null,
         name: ''
       },
       // 学生列表
@@ -176,7 +216,14 @@ export default {
       studentId: null,
       studentInfo: { id: null },
       // 成绩
-      scoreList: []
+      scoreList: [],
+      // 省份数据 用于pdf数据分析
+      provinceList: [],
+      // 图表数据 保存子组件的echarts图像,用于pdf导出
+      barChart: null,
+      pieChart: null,
+      scatterChart: null,
+      rankChart: null
     }
   },
   computed: {
@@ -209,6 +256,12 @@ export default {
         return item ? item.student : 0
       }
     },
+    // 本校学生数量
+    schoolStudentNum() {
+      return this.classList.reduce((total, item) => {
+        return total + item.student
+      }, 0)
+    },
     // 计算年龄
     age() {
       return (id) => {
@@ -218,15 +271,85 @@ export default {
         const birthday = year + '-' + month + '-' + day
         return dayjs().diff(birthday, 'year')
       }
+    },
+    // 有几个人是相同省份的
+    provinceNum() {
+      let pos = this.studentInfo.address.split(' ')[0]
+      // 由于数据原因 天津 重庆 北京 上海 要转为 天津市 重庆市 北京市 上海市
+      if (pos === '天津') {
+        pos = '天津市'
+      }
+      if (pos === '重庆') {
+        pos = '重庆市'
+      }
+      if (pos === '北京') {
+        pos = '北京市'
+      }
+      if (pos === '上海') {
+        pos = '上海市'
+      }
+      const num = this.provinceList.find(item => item.name === pos).value
+      return `1、你来自${pos}，全校有${num - 1}个同学与你同一个省、市、区。`
+    },
+    // 根据成绩计算标准差 表示成绩的波动性 公式为：方差=∑(x-平均分)^2/n n为总数 x为每科的成绩 值越小表示成绩越稳定
+    variance() {
+      const avg = this.scoreList[this.scoreList.length - 2].score
+      const courseScore = _.cloneDeep(this.scoreList.slice(0, this.scoreList.length - 2))
+      const variance = courseScore.reduce((total, item) => {
+        return total + Math.pow(item.score - avg, 2)
+      }, 0) / courseScore.length
+      // 标准差
+      const standardDeviation = Math.sqrt(variance)
+      return standardDeviation.toFixed(2)
+    },
+    // 数据分析内容
+    dataAnalysis() {
+      const rate = ((this.studentList.length) / this.schoolStudentNum * 100).toFixed(2)
+      const str1 = `2、本校共有${this.schoolStudentNum}名学生，其中有${this.studentList.length - 1}名是你的同班同学，你们班级的人数占全校${rate}%。`
+      // 前10%为优秀， 10%-30%为良好， 30%-50%为中等， 50%-70%为中等偏下， 70%以上为靠后
+      const pos = {
+        1: '优秀',
+        2: '良好',
+        3: '中等',
+        4: '中等偏下',
+        5: '靠后'
+      }
+      // Math.ceil 向上取整
+      const rank = Math.ceil(this.studentInfo.rank / this.studentList.length * 5)
+      // 不及格和90分以上的科目数
+      const fail = this.scoreList.filter(item => {
+        if (item.score < 60 && item.name !== '平均分' && item.name !== '总分') {
+          return item
+        }
+      }).length
+      const good = this.scoreList.filter(item => {
+        if (item.score >= 90 && item.name !== '平均分' && item.name !== '总分') {
+          return item
+        }
+      }).length
+      const str2 = `3、在本次考试中，共参加了${this.scoreList.length - 2}科考试，有${fail}科不及格，${good}科达到90分及以上，你的平均分`
+      const average = this.scoreList.find(item => item.name === '平均分')?.score >= 60 ? '在及格线以上，希望继续努力,' : '低于及格线，需要加把劲了,'
+      const str3 = `考试排名位于第${this.studentInfo.rank}名，在班级${this.studentList.length}名学生中属于${pos[rank] || '逆天'}范围。`
+
+      const variance = this.variance
+      // 根据标准差和平均分判断成绩的稳定性
+      let str4 = `4、你的成绩标准差为${variance}，`
+      if (variance <= 15) {
+        str4 += '成绩稳定性很高，各科目的分数都比较均衡。'
+      } else if (variance <= 25) {
+        str4 += '成绩稳定性一般，个别科目出现偏科现象。'
+      } else {
+        str4 += '成绩稳定性不高，偏科极为严重，需要多加注意。'
+      }
+
+      return this.provinceNum + '\n' + str1 + '\n' + str2 + '\n' + average + str3 + '\n' + str4
     }
   },
   mounted() {
     this.$store.dispatch('classL/getClassList')
-    // 测试
-    this.getStudentList()
-    setTimeout(() => {
-      this.selectStudentInfo()
-    }, 500)
+    studentApi.getProvince().then(res => {
+      this.provinceList = res.data
+    })
   },
   methods: {
     // 获取学生列表
@@ -240,10 +363,7 @@ export default {
       const params = {
         status: 0,
         page: 1,
-        // pageSize: this.studentNum(this.searchForm.class)
-
-        // 测试
-        pageSize: 99
+        pageSize: this.studentNum(this.searchForm.class)
       }
       studentApi.getStudentList(params, this.searchForm).then(res => {
         this.studentList = res.data
@@ -255,17 +375,29 @@ export default {
     },
     // 选择学生
     selectStudentInfo() {
-      // 测试
-      // this.studentId = 506
-
       this.studentInfo = this.studentList.find(item => item.id === this.studentId)
       this.getStudentScore()
     },
-    // 获取学生成绩
+    // 获取学生成绩和排名
     getStudentScore() {
-      getStudentScore(this.studentInfo.id).then(res => {
+      getStudentScore(this.studentInfo?.id).then(res => {
         this.scoreList = res.data
       })
+      getStudentRank(this.studentInfo?.id).then((res) => {
+        this.$set(this.studentInfo, 'rank', res.data)
+      })
+    },
+    // 自定义事件 获取图表
+    getChart(type, canvas) {
+      if (type === 1) {
+        this.barChart = canvas
+      } else if (type === 2) {
+        this.pieChart = canvas
+      } else if (type === 3) {
+        this.scatterChart = canvas
+      } else if (type === 4) {
+        this.rankChart = canvas
+      }
     },
     // 导出PDF
     exportPDF() {
@@ -277,7 +409,6 @@ export default {
         background: 'rgba(0, 0, 0, 0.7)'
       })
 
-      this.$message({ message: '功能持续完善中', type: 'success' })
       // eslint-disable-next-line new-cap
       const doc = new jsPDF()
       // 中文字题
@@ -345,7 +476,7 @@ export default {
         doc.rect(tableX + 80, tableY + cellHeight * 3, 50, cellHeight, 'S')
         // 第三行数据
         doc.text('居住地', tableX + 3, tableY + cellHeight * 3 + 7)
-        doc.text(this.studentInfo.address.split(' ')[0], tableX + 20 + 11, tableY + cellHeight * 3 + 7)
+        doc.text(this.studentInfo.address.split(' ')[0], tableX + 20 + 9, tableY + cellHeight * 3 + 7)
         doc.text('身份证', tableX + 60 + 3, tableY + cellHeight * 3 + 7)
         doc.text(this.studentInfo.id_number.toString(), tableX + 80 + 5, tableY + cellHeight * 3 + 7)
 
@@ -367,6 +498,88 @@ export default {
         doc.text('家庭地址', tableX + 8, tableY + cellHeight * 5 + 7)
         doc.text(this.studentInfo.address, tableX + 35 + 25, tableY + cellHeight * 5 + 7)
 
+        // 第六行表格 获奖信息
+        doc.rect(tableX, tableY + cellHeight * 6, 35, cellHeight, 'S')
+        doc.rect(tableX + 35, tableY + cellHeight * 6, 135, cellHeight, 'S')
+        // 第六行数据
+        doc.text('获奖信息', tableX + 8, tableY + cellHeight * 6 + 7)
+        doc.text('无', tableX + 35 + 65, tableY + cellHeight * 6 + 7)
+
+        // 第七行表格 中间显示'各科成绩平均分'
+        doc.rect(tableX, tableY + cellHeight * 7, 170, cellHeight, 'S')
+        // 第七行数据
+        doc.text('最新考试成绩', tableX + 70, tableY + cellHeight * 7 + 7)
+
+        // 第八 九 行 表格和数据
+        for (let i = 0; i < 9; i++) {
+          const width = i === 8 ? 18 : 19
+          // 第八行 课程标题
+          doc.rect(tableX + 19 * i, tableY + cellHeight * 8, width, cellHeight, 'S')
+          doc.text(this.scoreList[i].name, tableX + 19 * i + 4, tableY + cellHeight * (8) + 7)
+          // 第九行 课程成绩
+          doc.rect(tableX + 19 * i, tableY + cellHeight * 9, width, cellHeight, 'S')
+          doc.text(this.scoreList[i].score.toString(), tableX + 19 * i + 5.5, tableY + cellHeight * (9) + 7)
+        }
+
+        // 第十行 表格 平均分 总分 排名
+        doc.rect(tableX, tableY + cellHeight * 10, 29, cellHeight, 'S')
+        doc.rect(tableX + 29, tableY + cellHeight * 10, 29, cellHeight, 'S')
+        doc.rect(tableX + 58, tableY + cellHeight * 10, 29, cellHeight, 'S')
+        doc.rect(tableX + 87, tableY + cellHeight * 10, 29, cellHeight, 'S')
+        doc.rect(tableX + 116, tableY + cellHeight * 10, 25, cellHeight, 'S')
+        doc.rect(tableX + 141, tableY + cellHeight * 10, 29, cellHeight, 'S')
+        // 第十行 数据
+        doc.text('平均分', tableX + 6, tableY + cellHeight * 10 + 7)
+        doc.text(this.scoreList[9].score.toString(), tableX + 38, tableY + cellHeight * 10 + 7)
+        doc.text('总分', tableX + 67, tableY + cellHeight * 10 + 7)
+        doc.text(this.scoreList[10].score.toString(), tableX + 98, tableY + cellHeight * 10 + 7)
+        doc.text('排名', tableX + 123, tableY + cellHeight * 10 + 7)
+        doc.text(this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), tableX + 148, tableY + cellHeight * 10 + 7)
+
+        // 第十一行 表格 数据分析
+        doc.rect(tableX, tableY + cellHeight * 11, 170, cellHeight, 'S')
+        // 第十一行 数据
+        doc.text('数据分析', tableX + 75, tableY + cellHeight * 11 + 7)
+
+        // 下面画出十字线 用于存放四个图表
+        doc.line(pageWidth / 2, tableY + cellHeight * 12, pageWidth / 2, tableY + cellHeight * 23)
+        doc.line(tableX, tableY + cellHeight * 17.5, tableX + 170, tableY + cellHeight * 17.5)
+        doc.line(tableX, tableY + cellHeight * 23, tableX + 170, tableY + cellHeight * 23)
+
+        // 底部 表格 数据分析内容
+        doc.rect(tableX, tableY + cellHeight * 12, 170, cellHeight * 14, 'S')
+        // 底部 数据
+        doc.text(this.dataAnalysis, tableX + 5, tableY + cellHeight * 23 + 7)
+
+        // 获取图表图片
+        this.$refs['barChart'].getChartImg()
+        this.$refs['pieChart'].getChartImg()
+        this.$refs['scatterChart'].getChartImg()
+        this.$refs['rankChart'].getChartImg()
+        // 创建一个图片
+        const barChartImg = new Image()
+        const pieChartImg = new Image()
+        const scatterChartImg = new Image()
+        const rankChartImg = new Image()
+        barChartImg.src = this.barChart
+        pieChartImg.src = this.pieChart
+        scatterChartImg.src = this.scatterChart
+        rankChartImg.src = this.rankChart
+
+        // 图表图片加载完成后添加到pdf
+        barChartImg.onload = () => {
+          doc.addImage(barChartImg, 'PNG', 24, 142, 74, 52)
+        }
+        pieChartImg.onload = () => {
+          doc.addImage(pieChartImg, 'PNG', 110, 142, 78, 52)
+        }
+        scatterChartImg.onload = () => {
+          doc.addImage(scatterChartImg, 'PNG', 24, 198, 78, 51)
+        }
+        rankChartImg.onload = () => {
+          doc.addImage(rankChartImg, 'PNG', 118, 198, 55, 51)
+        }
+
         // 右上角 学生照片
         const photoX = tableX + 130 // 20 + 130
         const photoY = 30
@@ -379,9 +592,9 @@ export default {
         const defaultImg = require('@/assets/1.jpg')
         img.crossOrigin = 'anonymous'
         img.src = this.studentInfo.avatar || defaultImg
-        img.onload = function() {
-          doc.addImage(this, 'JPEG', photoX + 0.5, photoY + 0.5, photoWidth, photoHeight)
-          doc.save('学生信息.pdf')
+        img.onload = () => {
+          doc.addImage(img, 'JPEG', photoX + 0.5, photoY + 0.5, photoWidth, photoHeight)
+          doc.save(this.studentInfo.name + ' - 学生信息.pdf')
           // 关闭加载
           loading.close()
         }
@@ -395,5 +608,19 @@ export default {
 .score-list {
   /*  居中显示*/
   text-align: center;
+}
+
+.like {
+  cursor: pointer;
+  font-size: 25px;
+  display: inline-block;
+}
+
+.chart-pos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 250px;
 }
 </style>

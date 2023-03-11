@@ -61,3 +61,11 @@ export function getStudentScore(id) {
     method: 'get'
   })
 }
+
+// 查询学生的排名
+export function getStudentRank(id) {
+  return request({
+    url: `${BASE_API}/getStudentRank/${id}`,
+    method: 'get'
+  })
+}

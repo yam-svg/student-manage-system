@@ -287,6 +287,7 @@ import _ from 'lodash'
 import { regionData, CodeToText, TextToCode } from 'element-china-area-data'
 // 引入Excel导出工具
 import { createWs, openDownloadDialog, sheet2blob } from '@/utils/excel'
+import dayjs from 'dayjs'
 
 export default {
   name: 'Epidemic',
@@ -663,7 +664,7 @@ export default {
           health_code: this.healthAndStrokeCodeName(item.health_code),
           stroke_code: this.healthAndStrokeCodeName(item.stroke_code),
           is_detection: item.is_detection === 0 ? '否' : '是',
-          detection_time: item.detection_time || '未检测',
+          detection_time: item.detection_time ? dayjs(item.detection_time).format('YYYY-MM-DD') : '未检测',
           detection_result: this.nucleicAcidResultName(item.is_detection, item.detection_result),
           at_school: item.at_school === 0 ? '否' : '是',
           reason: this.leaveSchoolReason(item.reason),
