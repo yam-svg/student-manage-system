@@ -447,12 +447,12 @@ export default {
         doc.rect(tableX + 90, tableY + cellHeight, 20, cellHeight, 'S')
         doc.rect(tableX + 110, tableY + cellHeight, 20, cellHeight, 'S')
         // 第一行数据 姓名 性别 年龄
-        doc.text('姓名', tableX + 5, tableY + cellHeight + 7)
-        doc.text(this.studentInfo.name, tableX + 20 + 8, tableY + cellHeight + 7)
-        doc.text('性别', tableX + 50 + 5, tableY + cellHeight + 7)
-        doc.text(this.studentInfo.sex, tableX + 70 + 8, tableY + cellHeight + 7)
-        doc.text('年龄', tableX + 90 + 5, tableY + cellHeight + 7)
-        doc.text(this.age(this.studentInfo.id_number).toString(), tableX + 110 + 6, tableY + cellHeight + 7)
+        doc.text('姓名', this.getCenterX(doc, '姓名', tableX, 20), tableY + cellHeight + 7)
+        doc.text(this.studentInfo.name, this.getCenterX(doc, this.studentInfo.name, tableX + 20, 30), tableY + cellHeight + 7)
+        doc.text('性别', this.getCenterX(doc, '性别', tableX + 50, 20), tableY + cellHeight + 7)
+        doc.text(this.studentInfo.sex, this.getCenterX(doc, this.studentInfo.sex, tableX + 70, 20), tableY + cellHeight + 7)
+        doc.text('年龄', this.getCenterX(doc, '年龄', tableX + 90, 20), tableY + cellHeight + 7)
+        doc.text(this.age(this.studentInfo.id_number).toString(), this.getCenterX(doc, this.age(this.studentInfo.id_number).toString(), tableX + 110, 20), tableY + cellHeight + 7)
 
         // 第二行表格 电话 班级 备注
         doc.rect(tableX, tableY + cellHeight * 2, 20, cellHeight, 'S')
@@ -462,12 +462,12 @@ export default {
         doc.rect(tableX + 90, tableY + cellHeight * 2, 20, cellHeight, 'S')
         doc.rect(tableX + 110, tableY + cellHeight * 2, 20, cellHeight, 'S')
         // 第二行数据
-        doc.text('电话', tableX + 5, tableY + cellHeight * 2 + 7)
-        doc.text(this.studentInfo.father_tel.toString(), tableX + 20 + 3, tableY + cellHeight * 2 + 7)
-        doc.text('班级', tableX + 50 + 5, tableY + cellHeight * 2 + 7)
-        doc.text(this.className(this.studentInfo.class), tableX + 70 + 5, tableY + cellHeight * 2 + 7)
-        doc.text('备注', tableX + 90 + 5, tableY + cellHeight * 2 + 7)
-        doc.text(this.remark(this.studentInfo.remark), tableX + 110 + 3, tableY + cellHeight * 2 + 7)
+        doc.text('电话', this.getCenterX(doc, '电话', tableX, 20), tableY + cellHeight * 2 + 7)
+        doc.text(this.studentInfo.father_tel.toString(), this.getCenterX(doc, this.studentInfo.father_tel.toString(), tableX + 20, 30), tableY + cellHeight * 2 + 7)
+        doc.text('班级', this.getCenterX(doc, '班级', tableX + 50, 20), tableY + cellHeight * 2 + 7)
+        doc.text(this.className(this.studentInfo.class), this.getCenterX(doc, this.className(this.studentInfo.class), tableX + 70, 20), tableY + cellHeight * 2 + 7)
+        doc.text('备注', this.getCenterX(doc, '备注', tableX + 90, 20), tableY + cellHeight * 2 + 7)
+        doc.text(this.remark(this.studentInfo.remark), this.getCenterX(doc, this.remark(this.studentInfo.remark), tableX + 110, 20), tableY + cellHeight * 2 + 7)
 
         // 第三行表格 居住地 身份证
         doc.rect(tableX, tableY + cellHeight * 3, 20, cellHeight, 'S')
@@ -475,10 +475,10 @@ export default {
         doc.rect(tableX + 60, tableY + cellHeight * 3, 20, cellHeight, 'S')
         doc.rect(tableX + 80, tableY + cellHeight * 3, 50, cellHeight, 'S')
         // 第三行数据
-        doc.text('居住地', tableX + 3, tableY + cellHeight * 3 + 7)
-        doc.text(this.studentInfo.address.split(' ')[0], tableX + 20 + 9, tableY + cellHeight * 3 + 7)
-        doc.text('身份证', tableX + 60 + 3, tableY + cellHeight * 3 + 7)
-        doc.text(this.studentInfo.id_number.toString(), tableX + 80 + 5, tableY + cellHeight * 3 + 7)
+        doc.text('居住地', this.getCenterX(doc, '居住地', tableX, 20), tableY + cellHeight * 3 + 7)
+        doc.text(this.studentInfo.address.split(' ')[0], this.getCenterX(doc, this.studentInfo.address.split(' ')[0], tableX + 20, 40), tableY + cellHeight * 3 + 7)
+        doc.text('身份证', this.getCenterX(doc, '身份证', tableX + 60, 20), tableY + cellHeight * 3 + 7)
+        doc.text(this.studentInfo.id_number.toString(), this.getCenterX(doc, this.studentInfo.id_number.toString(), tableX + 80, 50), tableY + cellHeight * 3 + 7)
 
         // 第四行表格 监护人 入学时间
         doc.rect(tableX, tableY + cellHeight * 4, 20, cellHeight, 'S')
@@ -486,39 +486,39 @@ export default {
         doc.rect(tableX + 60, tableY + cellHeight * 4, 20, cellHeight, 'S')
         doc.rect(tableX + 80, tableY + cellHeight * 4, 50, cellHeight, 'S')
         // 第四行数据
-        doc.text('监护人', tableX + 3, tableY + cellHeight * 4 + 7)
-        doc.text(this.studentInfo.father_name, tableX + 20 + 13, tableY + cellHeight * 4 + 7)
-        doc.text('入学时间', tableX + 60 + 1, tableY + cellHeight * 4 + 7)
-        doc.text(this.createTime(this.studentInfo.create_time).toString(), tableX + 80 + 12, tableY + cellHeight * 4 + 7)
+        doc.text('监护人', this.getCenterX(doc, '监护人', tableX, 20), tableY + cellHeight * 4 + 7)
+        doc.text(this.studentInfo.father_name, this.getCenterX(doc, this.studentInfo.father_name, tableX + 20, 40), tableY + cellHeight * 4 + 7)
+        doc.text('入学时间', this.getCenterX(doc, '入学时间', tableX + 60, 20), tableY + cellHeight * 4 + 7)
+        doc.text(this.createTime(this.studentInfo.create_time).toString(), this.getCenterX(doc, this.createTime(this.studentInfo.create_time).toString(), tableX + 80, 50), tableY + cellHeight * 4 + 7)
 
         // 第五行表格 家庭地址
         doc.rect(tableX, tableY + cellHeight * 5, 35, cellHeight, 'S')
         doc.rect(tableX + 35, tableY + cellHeight * 5, 135, cellHeight, 'S')
         // 第五行数据
-        doc.text('家庭地址', tableX + 8, tableY + cellHeight * 5 + 7)
-        doc.text(this.studentInfo.address, tableX + 35 + 25, tableY + cellHeight * 5 + 7)
+        doc.text('家庭地址', this.getCenterX(doc, '家庭地址', tableX, 35), tableY + cellHeight * 5 + 7)
+        doc.text(this.studentInfo.address, this.getCenterX(doc, this.studentInfo.address, tableX + 35, 135), tableY + cellHeight * 5 + 7)
 
         // 第六行表格 获奖信息
         doc.rect(tableX, tableY + cellHeight * 6, 35, cellHeight, 'S')
         doc.rect(tableX + 35, tableY + cellHeight * 6, 135, cellHeight, 'S')
         // 第六行数据
-        doc.text('获奖信息', tableX + 8, tableY + cellHeight * 6 + 7)
-        doc.text('无', tableX + 35 + 65, tableY + cellHeight * 6 + 7)
+        doc.text('获奖信息', this.getCenterX(doc, '获奖信息', tableX, 35), tableY + cellHeight * 6 + 7)
+        doc.text('无', this.getCenterX(doc, '无', tableX + 35, 135), tableY + cellHeight * 6 + 7)
 
         // 第七行表格 中间显示'各科成绩平均分'
         doc.rect(tableX, tableY + cellHeight * 7, 170, cellHeight, 'S')
         // 第七行数据
-        doc.text('最新考试成绩', tableX + 70, tableY + cellHeight * 7 + 7)
+        doc.text('最新考试成绩', this.getCenterX(doc, '最新考试成绩', tableX, 170), tableY + cellHeight * 7 + 7)
 
         // 第八 九 行 表格和数据
         for (let i = 0; i < 9; i++) {
           const width = i === 8 ? 18 : 19
           // 第八行 课程标题
           doc.rect(tableX + 19 * i, tableY + cellHeight * 8, width, cellHeight, 'S')
-          doc.text(this.scoreList[i].name, tableX + 19 * i + 4, tableY + cellHeight * (8) + 7)
+          doc.text(this.scoreList[i].name, this.getCenterX(doc, this.scoreList[i].name, tableX + 19 * i, width), tableY + cellHeight * (8) + 7)
           // 第九行 课程成绩
           doc.rect(tableX + 19 * i, tableY + cellHeight * 9, width, cellHeight, 'S')
-          doc.text(this.scoreList[i].score.toString(), tableX + 19 * i + 5.5, tableY + cellHeight * (9) + 7)
+          doc.text(this.scoreList[i].score.toString(), this.getCenterX(doc, this.scoreList[i].score.toString(), tableX + 19 * i, width), tableY + cellHeight * (9) + 7)
         }
 
         // 第十行 表格 平均分 总分 排名
@@ -529,17 +529,18 @@ export default {
         doc.rect(tableX + 116, tableY + cellHeight * 10, 25, cellHeight, 'S')
         doc.rect(tableX + 141, tableY + cellHeight * 10, 29, cellHeight, 'S')
         // 第十行 数据
-        doc.text('平均分', tableX + 6, tableY + cellHeight * 10 + 7)
-        doc.text(this.scoreList[9].score.toString(), tableX + 38, tableY + cellHeight * 10 + 7)
-        doc.text('总分', tableX + 67, tableY + cellHeight * 10 + 7)
-        doc.text(this.scoreList[10].score.toString(), tableX + 98, tableY + cellHeight * 10 + 7)
-        doc.text('排名', tableX + 123, tableY + cellHeight * 10 + 7)
-        doc.text(this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), tableX + 148, tableY + cellHeight * 10 + 7)
+        doc.text('平均分', this.getCenterX(doc, '平均分', tableX, 29), tableY + cellHeight * 10 + 7)
+        doc.text(this.scoreList[9].score.toString(), this.getCenterX(doc, this.scoreList[9].score.toString(), tableX + 29, 29), tableY + cellHeight * 10 + 7)
+        doc.text('总分', this.getCenterX(doc, '总分', tableX + 58, 29), tableY + cellHeight * 10 + 7)
+        doc.text(this.scoreList[10].score.toString(), this.getCenterX(doc, this.scoreList[10].score.toString(), tableX + 87, 29), tableY + cellHeight * 10 + 7)
+        doc.text('排名', this.getCenterX(doc, '排名', tableX + 116, 25), tableY + cellHeight * 10 + 7)
+        const rankPositionX = this.getCenterX(doc, this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), tableX + 141, 29)
+        doc.text(this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), rankPositionX, tableY + cellHeight * 10 + 7)
 
         // 第十一行 表格 数据分析
         doc.rect(tableX, tableY + cellHeight * 11, 170, cellHeight, 'S')
         // 第十一行 数据
-        doc.text('数据分析', tableX + 75, tableY + cellHeight * 11 + 7)
+        doc.text('数据分析', this.getCenterX(doc, '数据分析', tableX, 170), tableY + cellHeight * 11 + 7)
 
         // 下面画出十字线 用于存放四个图表
         doc.line(pageWidth / 2, tableY + cellHeight * 12, pageWidth / 2, tableY + cellHeight * 23)
@@ -599,6 +600,24 @@ export default {
           loading.close()
         }
       })
+    },
+    // 获取PDF文本居中的x坐标
+    getCenterX(doc, text, x, tableWidth) {
+      // q: 为什么要除以doc.internal.scaleFactor
+      // a: 因为jsPDF的单位是pt，而html的单位是px，所以需要转换
+      // q: 为什么要乘以doc.internal.getFontSize()
+      // a: 因为jsPDF的字体大小是以pt为单位的，而html的字体大小是以px为单位的，所以需要转换
+      // q: doc.getStringUnitWidth是什么意思
+      // a: 获取字符串的宽度，单位是pt
+      const textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor
+      return x + (tableWidth - textWidth) / 2
+      /*
+      * 计算文本在表格中水平居中时的X轴坐标值。
+      * 具体实现是先使用doc.getStringUnitWidth(text)计算文本的宽度，
+      * 再乘以当前字体大小和文本缩放比例的乘积得到真实的文本宽度，
+      * 然后用表格宽度减去文本宽度，再除以2，即可得到文本居中时的X轴坐标值。
+      * 最后将这个值加上表格的起始X轴坐标值x，即可得到文本在表格中的水平居中位置。
+      *  */
     }
   }
 }
@@ -608,12 +627,6 @@ export default {
 .score-list {
   /*  居中显示*/
   text-align: center;
-}
-
-.like {
-  cursor: pointer;
-  font-size: 25px;
-  display: inline-block;
 }
 
 .chart-pos {
