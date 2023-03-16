@@ -1,4 +1,4 @@
-可进入 http://fanshu.xyz 进行在线访问本项目
+### 可进入 http://fanshu.xyz 在线访问本项目
 ***
 ### 项目介绍
 项目介绍：本项目主要有数据总览，学生管理，成绩管理，班级管理，教师管理，疫情管理，系统设置模块。
@@ -25,3 +25,24 @@
 ```
 npm run dev
 ```
+### 接口说明
+将项目克隆到本地后, 需要修改.env.development文件中的VUE_APP_BASE_API为后端接口地址
+将原文件中
+```
+# just a flag
+ENV = 'development'
+
+# base api
+VUE_APP_BASE_API = 'http://127.0.0.1:8080'
+# VUE_APP_BASE_API = 'http://fanshu.xyz:8080'
+```
+修改为
+```
+# just a flag
+ENV = 'development'
+
+# base api
+# VUE_APP_BASE_API = 'http://127.0.0.1:8080'
+VUE_APP_BASE_API = 'http://fanshu.xyz:8080'
+```
+即可使项目连接到服务器的后端接口
