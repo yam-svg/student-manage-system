@@ -46,4 +46,22 @@ ENV = 'development'
 VUE_APP_BASE_API = 'http://fanshu.xyz:8080'
 ```
 即可使项目连接到服务器的后端接口
+### 13.常见问题
+项目启动中如有以下报错：
+```
+This relative module was not found:
+
+* ./cptable in ./node_modules/xlsx-style/dist/cpexcel.js
+```
+解决方法：
+```
+这个是前端 vue 中的 Excel 文件导出时用到的
+
+程序启动的时候出现错误，显示：not found ./cptable in node_modules/xlsx-style/dist/cpexcel.js
+这个不是程序的问题，而是，在该文件目录下面，有段程序写错了，
+
+找到./node_modules/xlsx-style/dist/cpexcel.js，第807行，var cpt = require(’./cpt’ + ‘able’);有误，
+
+改成 var cpt = cptable; 就可以正确启动程序了
+```
 #### 如有疑问, 可在留言至gitee

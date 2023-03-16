@@ -43,6 +43,7 @@ module.exports = {
     }
   },
   chainWebpack(config) {
+    config.externals({ './cptable': 'var cptable' })
     config.plugin('preload').tap(() => [
       {
         rel: 'preload',
