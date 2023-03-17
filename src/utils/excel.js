@@ -68,19 +68,27 @@ export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导�
   // 设置表格样式
   for (let i = range.s.c; i < range.e.c + 1; i++) {
     for (let j = range.s.r; j < range.e.r + 1; j++) {
+      // 单元格的地址, c是列，r是行, 如A1的地址是{c:0, r:0}
       const cell_address = {
         c: i,
         r: j
       }
       const column = XLSX.utils.encode_cell(cell_address)
+      // 获取该单元格的值
+      const value = ws[column].v
+      // 判断 红码和阳性 为红色, 绿码,阴性,已采样 为绿色, 黄码 为橘黄色
       ws[column].s = {
+        // 单元格字体样式
         font: {
           name: '宋体',
           sz: 11,
           color: {
-            auto: 1
-          }
+            rgb: value === '红码' || value === '阳性！' ? 'FF0000' : value === '绿码' || value === '阴性' || value === '已采样' ? '008000' : value === '黄码' ? 'FFA500' : '000000'
+          },
+          // 健康码 行程码 检测结果 字体加粗
+          bold: value === '红码' || value === '绿码' || value === '黄码' || value === '阴性' || value === '阳性！' || value === '已采样' || value === '检测结果'
         },
+        // 单元格的边框线
         border: {
           color: {
             auto: 1
@@ -98,6 +106,7 @@ export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导�
             style: 'thin'
           }
         },
+        // 单元格内容的排列方式
         alignment: {
           // 自动换行
           wrapText: 1,
