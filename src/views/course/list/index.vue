@@ -32,57 +32,57 @@
       </el-table-column>
       <el-table-column sortable sort-by="chinese" label="语文">
         <template v-slot="scope">
-          <span>{{ scope.row.chinese }}</span>
+          <span>{{ scope.row.chinese || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="mathematics" label="数学">
         <template v-slot="scope">
-          <span>{{ scope.row.mathematics }}</span>
+          <span>{{ scope.row.mathematics || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="english" label="英语">
         <template v-slot="scope">
-          <span>{{ scope.row.english }}</span>
+          <span>{{ scope.row.english || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="physics" label="物理">
         <template v-slot="scope">
-          <span>{{ scope.row.physics }}</span>
+          <span>{{ scope.row.physics || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="chemistry" label="化学">
         <template v-slot="scope">
-          <span>{{ scope.row.chemistry }}</span>
+          <span>{{ scope.row.chemistry || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="biology" label="生物">
         <template v-slot="scope">
-          <span>{{ scope.row.biology }}</span>
+          <span>{{ scope.row.biology || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="politics" label="政治">
         <template v-slot="scope">
-          <span>{{ scope.row.politics }}</span>
+          <span>{{ scope.row.politics || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="history" label="历史">
         <template v-slot="scope">
-          <span>{{ scope.row.history }}</span>
+          <span>{{ scope.row.history || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="geography" label="地理">
         <template v-slot="scope">
-          <span>{{ scope.row.geography }}</span>
+          <span>{{ scope.row.geography || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="total" label="总分">
         <template v-slot="scope">
-          <span>{{ scope.row.total }}</span>
+          <span>{{ scope.row.total || 0 }}</span>
         </template>
       </el-table-column>
       <el-table-column sortable sort-by="average" label="平均分">
         <template v-slot="scope">
-          <span>{{ scope.row.average }}</span>
+          <span>{{ scope.row.average || 0 }}</span>
         </template>
       </el-table-column>
     </el-table>
@@ -158,12 +158,55 @@ export default {
       // 获取成绩数据
       courseApi.getScoreData(params).then(res => {
         this.scoreData = res.data
+        // 计算各科及格率
+        if (this.scoreData.length) {
+          this.coursePassRate()
+        }
       })
     },
     // 级联选择器change事件 value为数组 ['考试批次id', '班级id']
     handleChange(value) {
       this.value = value
       this.getScoreData()
+    },
+    // 计算各科及格率
+    coursePassRate() {
+      // 总人数
+      const total = this.scoreData.length || 1
+      // 语文
+      const chinese = this.scoreData.filter(item => item.chinese >= 60).length / total
+      // 数学
+      const mathematics = this.scoreData.filter(item => item.mathematics >= 60).length / total
+      // 英语 / total
+      const english = this.scoreData.filter(item => item.english >= 60).length / total
+      // 物理 / total
+      const physics = this.scoreData.filter(item => item.physics >= 60).length / total
+      // 化学 / total
+      const chemistry = this.scoreData.filter(item => item.chemistry >= 60).length / total
+      // 生物 / total
+      const biology = this.scoreData.filter(item => item.biology >= 60).length / total
+      // 政治 / total
+      const politics = this.scoreData.filter(item => item.politics >= 60).length / total
+      // 历史 / total
+      const history = this.scoreData.filter(item => item.history >= 60).length / total
+      // 地理 / total
+      const geography = this.scoreData.filter(item => item.geography >= 60).length / total
+      // 添加到成绩数据中
+      this.scoreData.push({
+        name: '及格率',
+        chinese: (chinese * 100).toFixed(2) + '%',
+        mathematics: (mathematics * 100).toFixed(2) + '%',
+        english: (english * 100).toFixed(2) + '%',
+        physics: (physics * 100).toFixed(2) + '%',
+        chemistry: (chemistry * 100).toFixed(2) + '%',
+        biology: (biology * 100).toFixed(2) + '%',
+        politics: (politics * 100).toFixed(2) + '%',
+        history: (history * 100).toFixed(2) + '%',
+        geography: (geography * 100).toFixed(2) + '%',
+        // 有一个 \ 是转义字符，两个 \\ 才是一个 \
+        total: '\\',
+        average: '\\'
+      })
     },
     // 导出当前成绩
     exportScore() {
@@ -193,17 +236,17 @@ export default {
         return {
           index: index + 1,
           name: item.name,
-          chinese: item.chinese,
-          mathematics: item.mathematics,
-          english: item.english,
-          physics: item.physics,
-          chemistry: item.chemistry,
-          biology: item.biology,
-          politics: item.politics,
-          history: item.history,
-          geography: item.geography,
-          total: item.total,
-          average: item.average
+          chinese: item.chinese || 0,
+          mathematics: item.mathematics || 0,
+          english: item.english || 0,
+          physics: item.physics || 0,
+          chemistry: item.chemistry || 0,
+          biology: item.biology || 0,
+          politics: item.politics || 0,
+          history: item.history || 0,
+          geography: item.geography || 0,
+          total: item.total || 0,
+          average: item.average || 0
         }
       })
       const ws = createWs(data, fields, title)
