@@ -708,6 +708,8 @@ export default {
         this.studentInfo = item
         // 等待数据和pdf生成完毕
         await this.getStudentScore()
+        // 试图等待echarts动画完毕 不然生成的图像会有问题
+        await this.sleep(300)
         await this.exportPDF('batch')
         // 往zip里面添加文件 解决重名问题
         if (names.includes(this.studentInfo.name)) {
@@ -726,6 +728,9 @@ export default {
           })
         }
       }
+    },
+    sleep(time) {
+      return new Promise((resolve) => setTimeout(resolve, time))
     },
     // 获取选择批量导出的学生 全选或全不选
     handleCheckAllChange(val) {
