@@ -25,6 +25,9 @@
       <el-form-item label="学生姓名">
         <el-input v-model="searchForm.name" clearable size="mini" placeholder="学生姓名" @change="getStudentList" />
       </el-form-item>
+      <el-form-item label="批量选择">
+        <el-button :disabled="studentList.length === 0" type="primary" size="mini" @click="dialogVisible = true">选择学生</el-button>
+      </el-form-item>
       <el-form-item v-if="studentInfo.id" style="float: right">
         <el-avatar :size="65" shape="square" :src="studentInfo.avatar" />
       </el-form-item>
@@ -40,7 +43,7 @@
       border
     >
       <template slot="extra">
-        <el-button type="warning" size="mini" @click="exportPDF">导出PDF</el-button>
+        <el-button type="warning" size="mini" @click="exportPDF('default')">导出PDF</el-button>
       </template>
       <el-descriptions-item label-style="height: 20px">
         <template slot="label">
@@ -168,7 +171,12 @@
           </div>
         </template>
         <div class="chart-pos">
-          <barChart ref="barChart" :province-list="provinceList" :address="studentInfo.address.split(' ')[0]" @getChart="getChart" />
+          <barChart
+            ref="barChart"
+            :province-list="provinceList"
+            :address="studentInfo.address.split(' ')[0]"
+            @getChart="getChart"
+          />
         </div>
       </el-descriptions-item>
       <el-descriptions-item label-style="width: 55%">
@@ -180,10 +188,48 @@
         <div class="chart-pos">
           <pieChart ref="pieChart" style="width: 40%" :score-list="scoreList" @getChart="getChart" />
           <scatterChart ref="scatterChart" style="width: 35%" :score-list="scoreList" @getChart="getChart" />
-          <rankChart ref="rankChart" style="width: 25%" :student-info="studentInfo" :total="studentList.length" @getChart="getChart" />
+          <rankChart
+            ref="rankChart"
+            style="width: 25%"
+            :student-info="studentInfo"
+            :total="studentList.length"
+            @getChart="getChart"
+          />
         </div>
       </el-descriptions-item>
     </el-descriptions>
+    <!--选择导出的学生-->
+    <el-dialog
+      title="选择导出的学生"
+      :visible.sync="dialogVisible"
+      width="30%"
+    >
+      <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">全选</el-checkbox>
+      <div style="margin: 15px 0;" />
+      <el-checkbox-group v-model="selectExportList" @change="handleCheckedCitiesChange">
+        <el-checkbox v-for="s in studentList" :key="s.id" :label="s">{{ s.name }}</el-checkbox>
+      </el-checkbox-group>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="createZip">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!--进度条对话框-->
+    <el-dialog
+      title="PDF批量导出中,请稍后..."
+      :visible.sync="centerDialogVisible"
+      width="30%"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :destroy-on-close="true"
+      center
+    >
+      <el-progress :text-inside="true" :stroke-width="24" :percentage="progress" status="success" />
+      <span slot="footer" class="dialog-footer">
+        <span style="font-size: 12px; color: gray">速度取决于计算机的性能</span>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -192,7 +238,9 @@ import { mapState } from 'vuex'
 import studentApi from '@/api/student'
 import { getStudentRank, getStudentScore } from '@/api/course'
 import dayjs from 'dayjs'
-import jsPDF from 'jspdf'
+import JSPDF from 'jspdf'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 import 'jspdf-autotable'
 import barChart from './barChart/index'
 import pieChart from '@/views/portfolio/pieChart'
@@ -215,6 +263,8 @@ export default {
       // 选择的学生
       studentId: null,
       studentInfo: { id: null },
+      // 选择导出PDF的学生列表
+      selectExportList: [],
       // 成绩
       scoreList: [],
       // 省份数据 用于pdf数据分析
@@ -223,7 +273,17 @@ export default {
       barChart: null,
       pieChart: null,
       scatterChart: null,
-      rankChart: null
+      rankChart: null,
+      // pdf对象
+      pdf: null,
+      // loading
+      loading: null,
+      centerDialogVisible: false,
+      dialogVisible: false,
+      // 进度掉的进度
+      progress: 0,
+      isIndeterminate: false,
+      checkAll: false
     }
   },
   computed: {
@@ -347,6 +407,7 @@ export default {
   },
   mounted() {
     this.$store.dispatch('classL/getClassList')
+    // 获取省份列表
     studentApi.getProvince().then(res => {
       this.provinceList = res.data
     })
@@ -380,11 +441,16 @@ export default {
     },
     // 获取学生成绩和排名
     getStudentScore() {
-      getStudentScore(this.studentInfo?.id).then(res => {
-        this.scoreList = res.data
-      })
-      getStudentRank(this.studentInfo?.id).then((res) => {
-        this.$set(this.studentInfo, 'rank', res.data)
+      return new Promise((resolve) => {
+        // 获取学生成绩
+        getStudentScore(this.studentInfo?.id).then(res => {
+          this.scoreList = res.data
+          // 获取学生排名
+          getStudentRank(this.studentInfo?.id).then(res => {
+            this.$set(this.studentInfo, 'rank', res.data)
+            resolve()
+          })
+        })
       })
     },
     // 自定义事件 获取图表
@@ -400,205 +466,216 @@ export default {
       }
     },
     // 导出PDF
-    exportPDF() {
-      // 显示进度条
-      const loading = this.$loading({
-        lock: true,
-        text: '正在导出PDF',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
-
-      // eslint-disable-next-line new-cap
-      const doc = new jsPDF()
-      // 中文字题
-      const fontFile = require('@/assets/simsun.ttf')
-      const font = new FontFace('SimSun', `url(${fontFile})`)
-      font.load().then(() => {
-        // 加载字体
-        doc.addFont(fontFile, 'SimSun', 'normal')
-        doc.setFont('SimSun', 'normal')
-        // 个人信息居中大号显示
-        doc.setFontSize(30)
-        const title = '个人信息'
-        const titleWidth = doc.getTextWidth(title)
-        // 页面宽度 和 高度
-        const pageWidth = doc.internal.pageSize.width
-        // const pageHeight = doc.internal.pageSize.height
-        const titleX = (pageWidth - titleWidth) / 2
-        doc.text('个人信息', titleX, 20)
-
-        const tableX = 20
-        const tableY = 20
-        // const tableWidth = 130
-        // const colCount = 6
-        // const rowCount = 5
-        // 单元格宽度和高度
-        // const cellWidth = 20
-        const cellHeight = 10
-
-        doc.setFontSize(12)
-        // 表格数据说明 每一行可分配 130 + 40(头像) = 170  边缘部分 15
-        // 第一行表格
-        doc.rect(tableX, tableY + cellHeight, 20, cellHeight, 'S')
-        doc.rect(tableX + 20, tableY + cellHeight, 30, cellHeight, 'S')
-        doc.rect(tableX + 50, tableY + cellHeight, 20, cellHeight, 'S')
-        doc.rect(tableX + 70, tableY + cellHeight, 20, cellHeight, 'S')
-        doc.rect(tableX + 90, tableY + cellHeight, 20, cellHeight, 'S')
-        doc.rect(tableX + 110, tableY + cellHeight, 20, cellHeight, 'S')
-        // 第一行数据 姓名 性别 年龄
-        doc.text('姓名', this.getCenterX(doc, '姓名', tableX, 20), tableY + cellHeight + 7)
-        doc.text(this.studentInfo.name, this.getCenterX(doc, this.studentInfo.name, tableX + 20, 30), tableY + cellHeight + 7)
-        doc.text('性别', this.getCenterX(doc, '性别', tableX + 50, 20), tableY + cellHeight + 7)
-        doc.text(this.studentInfo.sex, this.getCenterX(doc, this.studentInfo.sex, tableX + 70, 20), tableY + cellHeight + 7)
-        doc.text('年龄', this.getCenterX(doc, '年龄', tableX + 90, 20), tableY + cellHeight + 7)
-        doc.text(this.age(this.studentInfo.id_number).toString(), this.getCenterX(doc, this.age(this.studentInfo.id_number).toString(), tableX + 110, 20), tableY + cellHeight + 7)
-
-        // 第二行表格 电话 班级 备注
-        doc.rect(tableX, tableY + cellHeight * 2, 20, cellHeight, 'S')
-        doc.rect(tableX + 20, tableY + cellHeight * 2, 30, cellHeight, 'S')
-        doc.rect(tableX + 50, tableY + cellHeight * 2, 20, cellHeight, 'S')
-        doc.rect(tableX + 70, tableY + cellHeight * 2, 20, cellHeight, 'S')
-        doc.rect(tableX + 90, tableY + cellHeight * 2, 20, cellHeight, 'S')
-        doc.rect(tableX + 110, tableY + cellHeight * 2, 20, cellHeight, 'S')
-        // 第二行数据
-        doc.text('电话', this.getCenterX(doc, '电话', tableX, 20), tableY + cellHeight * 2 + 7)
-        doc.text(this.studentInfo.father_tel.toString(), this.getCenterX(doc, this.studentInfo.father_tel.toString(), tableX + 20, 30), tableY + cellHeight * 2 + 7)
-        doc.text('班级', this.getCenterX(doc, '班级', tableX + 50, 20), tableY + cellHeight * 2 + 7)
-        doc.text(this.className(this.studentInfo.class), this.getCenterX(doc, this.className(this.studentInfo.class), tableX + 70, 20), tableY + cellHeight * 2 + 7)
-        doc.text('备注', this.getCenterX(doc, '备注', tableX + 90, 20), tableY + cellHeight * 2 + 7)
-        doc.text(this.remark(this.studentInfo.remark), this.getCenterX(doc, this.remark(this.studentInfo.remark), tableX + 110, 20), tableY + cellHeight * 2 + 7)
-
-        // 第三行表格 居住地 身份证
-        doc.rect(tableX, tableY + cellHeight * 3, 20, cellHeight, 'S')
-        doc.rect(tableX + 20, tableY + cellHeight * 3, 40, cellHeight, 'S')
-        doc.rect(tableX + 60, tableY + cellHeight * 3, 20, cellHeight, 'S')
-        doc.rect(tableX + 80, tableY + cellHeight * 3, 50, cellHeight, 'S')
-        // 第三行数据
-        doc.text('居住地', this.getCenterX(doc, '居住地', tableX, 20), tableY + cellHeight * 3 + 7)
-        doc.text(this.studentInfo.address.split(' ')[0], this.getCenterX(doc, this.studentInfo.address.split(' ')[0], tableX + 20, 40), tableY + cellHeight * 3 + 7)
-        doc.text('身份证', this.getCenterX(doc, '身份证', tableX + 60, 20), tableY + cellHeight * 3 + 7)
-        doc.text(this.studentInfo.id_number.toString(), this.getCenterX(doc, this.studentInfo.id_number.toString(), tableX + 80, 50), tableY + cellHeight * 3 + 7)
-
-        // 第四行表格 监护人 入学时间
-        doc.rect(tableX, tableY + cellHeight * 4, 20, cellHeight, 'S')
-        doc.rect(tableX + 20, tableY + cellHeight * 4, 40, cellHeight, 'S')
-        doc.rect(tableX + 60, tableY + cellHeight * 4, 20, cellHeight, 'S')
-        doc.rect(tableX + 80, tableY + cellHeight * 4, 50, cellHeight, 'S')
-        // 第四行数据
-        doc.text('监护人', this.getCenterX(doc, '监护人', tableX, 20), tableY + cellHeight * 4 + 7)
-        doc.text(this.studentInfo.father_name, this.getCenterX(doc, this.studentInfo.father_name, tableX + 20, 40), tableY + cellHeight * 4 + 7)
-        doc.text('入学时间', this.getCenterX(doc, '入学时间', tableX + 60, 20), tableY + cellHeight * 4 + 7)
-        doc.text(this.createTime(this.studentInfo.create_time).toString(), this.getCenterX(doc, this.createTime(this.studentInfo.create_time).toString(), tableX + 80, 50), tableY + cellHeight * 4 + 7)
-
-        // 第五行表格 家庭地址
-        doc.rect(tableX, tableY + cellHeight * 5, 35, cellHeight, 'S')
-        doc.rect(tableX + 35, tableY + cellHeight * 5, 135, cellHeight, 'S')
-        // 第五行数据
-        doc.text('家庭地址', this.getCenterX(doc, '家庭地址', tableX, 35), tableY + cellHeight * 5 + 7)
-        doc.text(this.studentInfo.address, this.getCenterX(doc, this.studentInfo.address, tableX + 35, 135), tableY + cellHeight * 5 + 7)
-
-        // 第六行表格 获奖信息
-        doc.rect(tableX, tableY + cellHeight * 6, 35, cellHeight, 'S')
-        doc.rect(tableX + 35, tableY + cellHeight * 6, 135, cellHeight, 'S')
-        // 第六行数据
-        doc.text('获奖信息', this.getCenterX(doc, '获奖信息', tableX, 35), tableY + cellHeight * 6 + 7)
-        doc.text('无', this.getCenterX(doc, '无', tableX + 35, 135), tableY + cellHeight * 6 + 7)
-
-        // 第七行表格 中间显示'各科成绩平均分'
-        doc.rect(tableX, tableY + cellHeight * 7, 170, cellHeight, 'S')
-        // 第七行数据
-        doc.text('最新考试成绩', this.getCenterX(doc, '最新考试成绩', tableX, 170), tableY + cellHeight * 7 + 7)
-
-        // 第八 九 行 表格和数据
-        for (let i = 0; i < 9; i++) {
-          const width = i === 8 ? 18 : 19
-          // 第八行 课程标题
-          doc.rect(tableX + 19 * i, tableY + cellHeight * 8, width, cellHeight, 'S')
-          doc.text(this.scoreList[i].name, this.getCenterX(doc, this.scoreList[i].name, tableX + 19 * i, width), tableY + cellHeight * (8) + 7)
-          // 第九行 课程成绩
-          doc.rect(tableX + 19 * i, tableY + cellHeight * 9, width, cellHeight, 'S')
-          doc.text(this.scoreList[i].score.toString(), this.getCenterX(doc, this.scoreList[i].score.toString(), tableX + 19 * i, width), tableY + cellHeight * (9) + 7)
+    exportPDF(type = 'default') {
+      // 使用promise解决异步问题 保证数据加载完成
+      return new Promise((resolve) => {
+        // 显示进度条 单个学生导出则显示
+        if (type === 'default') {
+          this.loading = this.$loading({
+            lock: true,
+            text: '正在导出PDF',
+            spinner: 'el-icon-loading',
+            background: 'rgba(0, 0, 0, 0.7)'
+          })
         }
+        const doc = new JSPDF()
+        // 中文字题
+        const fontFile = require('@/assets/simsun.ttf')
+        const font = new FontFace('SimSun', `url(${fontFile})`)
+        font.load().then(() => {
+          // 加载字体
+          doc.addFont(fontFile, 'SimSun', 'normal')
+          doc.setFont('SimSun', 'normal')
+          // 个人信息居中大号显示
+          doc.setFontSize(30)
+          const title = '个人信息'
+          const titleWidth = doc.getTextWidth(title)
+          // 页面宽度 和 高度
+          const pageWidth = doc.internal.pageSize.width
+          // const pageHeight = doc.internal.pageSize.height
+          const titleX = (pageWidth - titleWidth) / 2
+          doc.text('个人信息', titleX, 20)
 
-        // 第十行 表格 平均分 总分 排名
-        doc.rect(tableX, tableY + cellHeight * 10, 29, cellHeight, 'S')
-        doc.rect(tableX + 29, tableY + cellHeight * 10, 29, cellHeight, 'S')
-        doc.rect(tableX + 58, tableY + cellHeight * 10, 29, cellHeight, 'S')
-        doc.rect(tableX + 87, tableY + cellHeight * 10, 29, cellHeight, 'S')
-        doc.rect(tableX + 116, tableY + cellHeight * 10, 25, cellHeight, 'S')
-        doc.rect(tableX + 141, tableY + cellHeight * 10, 29, cellHeight, 'S')
-        // 第十行 数据
-        doc.text('平均分', this.getCenterX(doc, '平均分', tableX, 29), tableY + cellHeight * 10 + 7)
-        doc.text(this.scoreList[9].score.toString(), this.getCenterX(doc, this.scoreList[9].score.toString(), tableX + 29, 29), tableY + cellHeight * 10 + 7)
-        doc.text('总分', this.getCenterX(doc, '总分', tableX + 58, 29), tableY + cellHeight * 10 + 7)
-        doc.text(this.scoreList[10].score.toString(), this.getCenterX(doc, this.scoreList[10].score.toString(), tableX + 87, 29), tableY + cellHeight * 10 + 7)
-        doc.text('排名', this.getCenterX(doc, '排名', tableX + 116, 25), tableY + cellHeight * 10 + 7)
-        const rankPositionX = this.getCenterX(doc, this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), tableX + 141, 29)
-        doc.text(this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), rankPositionX, tableY + cellHeight * 10 + 7)
+          const tableX = 20
+          const tableY = 20
+          // const tableWidth = 130
+          // const colCount = 6
+          // const rowCount = 5
+          // 单元格宽度和高度
+          // const cellWidth = 20
+          const cellHeight = 10
 
-        // 第十一行 表格 数据分析
-        doc.rect(tableX, tableY + cellHeight * 11, 170, cellHeight, 'S')
-        // 第十一行 数据
-        doc.text('数据分析', this.getCenterX(doc, '数据分析', tableX, 170), tableY + cellHeight * 11 + 7)
+          doc.setFontSize(12)
+          // 表格数据说明 每一行可分配 130 + 40(头像) = 170  边缘部分 15
+          // 第一行表格
+          doc.rect(tableX, tableY + cellHeight, 20, cellHeight, 'S')
+          doc.rect(tableX + 20, tableY + cellHeight, 30, cellHeight, 'S')
+          doc.rect(tableX + 50, tableY + cellHeight, 20, cellHeight, 'S')
+          doc.rect(tableX + 70, tableY + cellHeight, 20, cellHeight, 'S')
+          doc.rect(tableX + 90, tableY + cellHeight, 20, cellHeight, 'S')
+          doc.rect(tableX + 110, tableY + cellHeight, 20, cellHeight, 'S')
+          // 第一行数据 姓名 性别 年龄
+          doc.text('姓名', this.getCenterX(doc, '姓名', tableX, 20), tableY + cellHeight + 7)
+          doc.text(this.studentInfo.name, this.getCenterX(doc, this.studentInfo.name, tableX + 20, 30), tableY + cellHeight + 7)
+          doc.text('性别', this.getCenterX(doc, '性别', tableX + 50, 20), tableY + cellHeight + 7)
+          doc.text(this.studentInfo.sex, this.getCenterX(doc, this.studentInfo.sex, tableX + 70, 20), tableY + cellHeight + 7)
+          doc.text('年龄', this.getCenterX(doc, '年龄', tableX + 90, 20), tableY + cellHeight + 7)
+          doc.text(this.age(this.studentInfo.id_number).toString(), this.getCenterX(doc, this.age(this.studentInfo.id_number).toString(), tableX + 110, 20), tableY + cellHeight + 7)
 
-        // 下面画出十字线 用于存放四个图表
-        doc.line(pageWidth / 2, tableY + cellHeight * 12, pageWidth / 2, tableY + cellHeight * 23)
-        doc.line(tableX, tableY + cellHeight * 17.5, tableX + 170, tableY + cellHeight * 17.5)
-        doc.line(tableX, tableY + cellHeight * 23, tableX + 170, tableY + cellHeight * 23)
+          // 第二行表格 电话 班级 备注
+          doc.rect(tableX, tableY + cellHeight * 2, 20, cellHeight, 'S')
+          doc.rect(tableX + 20, tableY + cellHeight * 2, 30, cellHeight, 'S')
+          doc.rect(tableX + 50, tableY + cellHeight * 2, 20, cellHeight, 'S')
+          doc.rect(tableX + 70, tableY + cellHeight * 2, 20, cellHeight, 'S')
+          doc.rect(tableX + 90, tableY + cellHeight * 2, 20, cellHeight, 'S')
+          doc.rect(tableX + 110, tableY + cellHeight * 2, 20, cellHeight, 'S')
+          // 第二行数据
+          doc.text('电话', this.getCenterX(doc, '电话', tableX, 20), tableY + cellHeight * 2 + 7)
+          doc.text(this.studentInfo.father_tel.toString(), this.getCenterX(doc, this.studentInfo.father_tel.toString(), tableX + 20, 30), tableY + cellHeight * 2 + 7)
+          doc.text('班级', this.getCenterX(doc, '班级', tableX + 50, 20), tableY + cellHeight * 2 + 7)
+          doc.text(this.className(this.studentInfo.class), this.getCenterX(doc, this.className(this.studentInfo.class), tableX + 70, 20), tableY + cellHeight * 2 + 7)
+          doc.text('备注', this.getCenterX(doc, '备注', tableX + 90, 20), tableY + cellHeight * 2 + 7)
+          doc.text(this.remark(this.studentInfo.remark), this.getCenterX(doc, this.remark(this.studentInfo.remark), tableX + 110, 20), tableY + cellHeight * 2 + 7)
 
-        // 底部 表格 数据分析内容
-        doc.rect(tableX, tableY + cellHeight * 12, 170, cellHeight * 14, 'S')
-        // 底部 数据
-        doc.text(this.dataAnalysis, tableX + 5, tableY + cellHeight * 23 + 7)
+          // 第三行表格 居住地 身份证
+          doc.rect(tableX, tableY + cellHeight * 3, 20, cellHeight, 'S')
+          doc.rect(tableX + 20, tableY + cellHeight * 3, 40, cellHeight, 'S')
+          doc.rect(tableX + 60, tableY + cellHeight * 3, 20, cellHeight, 'S')
+          doc.rect(tableX + 80, tableY + cellHeight * 3, 50, cellHeight, 'S')
+          // 第三行数据
+          doc.text('居住地', this.getCenterX(doc, '居住地', tableX, 20), tableY + cellHeight * 3 + 7)
+          doc.text(this.studentInfo.address.split(' ')[0], this.getCenterX(doc, this.studentInfo.address.split(' ')[0], tableX + 20, 40), tableY + cellHeight * 3 + 7)
+          doc.text('身份证', this.getCenterX(doc, '身份证', tableX + 60, 20), tableY + cellHeight * 3 + 7)
+          doc.text(this.studentInfo.id_number.toString(), this.getCenterX(doc, this.studentInfo.id_number.toString(), tableX + 80, 50), tableY + cellHeight * 3 + 7)
 
-        // 获取图表图片
-        this.$refs['barChart'].getChartImg()
-        this.$refs['pieChart'].getChartImg()
-        this.$refs['scatterChart'].getChartImg()
-        this.$refs['rankChart'].getChartImg()
-        // 创建一个图片
-        const barChartImg = new Image()
-        const pieChartImg = new Image()
-        const scatterChartImg = new Image()
-        const rankChartImg = new Image()
-        barChartImg.src = this.barChart
-        pieChartImg.src = this.pieChart
-        scatterChartImg.src = this.scatterChart
-        rankChartImg.src = this.rankChart
+          // 第四行表格 监护人 入学时间
+          doc.rect(tableX, tableY + cellHeight * 4, 20, cellHeight, 'S')
+          doc.rect(tableX + 20, tableY + cellHeight * 4, 40, cellHeight, 'S')
+          doc.rect(tableX + 60, tableY + cellHeight * 4, 20, cellHeight, 'S')
+          doc.rect(tableX + 80, tableY + cellHeight * 4, 50, cellHeight, 'S')
+          // 第四行数据
+          doc.text('监护人', this.getCenterX(doc, '监护人', tableX, 20), tableY + cellHeight * 4 + 7)
+          doc.text(this.studentInfo.father_name, this.getCenterX(doc, this.studentInfo.father_name, tableX + 20, 40), tableY + cellHeight * 4 + 7)
+          doc.text('入学时间', this.getCenterX(doc, '入学时间', tableX + 60, 20), tableY + cellHeight * 4 + 7)
+          doc.text(this.createTime(this.studentInfo.create_time).toString(), this.getCenterX(doc, this.createTime(this.studentInfo.create_time).toString(), tableX + 80, 50), tableY + cellHeight * 4 + 7)
 
-        // 图表图片加载完成后添加到pdf
-        barChartImg.onload = () => {
-          doc.addImage(barChartImg, 'PNG', 24, 142, 74, 52)
-        }
-        pieChartImg.onload = () => {
-          doc.addImage(pieChartImg, 'PNG', 110, 142, 78, 52)
-        }
-        scatterChartImg.onload = () => {
-          doc.addImage(scatterChartImg, 'PNG', 24, 198, 78, 51)
-        }
-        rankChartImg.onload = () => {
-          doc.addImage(rankChartImg, 'PNG', 118, 198, 55, 51)
-        }
+          // 第五行表格 家庭地址
+          doc.rect(tableX, tableY + cellHeight * 5, 35, cellHeight, 'S')
+          doc.rect(tableX + 35, tableY + cellHeight * 5, 135, cellHeight, 'S')
+          // 第五行数据
+          doc.text('家庭地址', this.getCenterX(doc, '家庭地址', tableX, 35), tableY + cellHeight * 5 + 7)
+          doc.text(this.studentInfo.address, this.getCenterX(doc, this.studentInfo.address, tableX + 35, 135), tableY + cellHeight * 5 + 7)
 
-        // 右上角 学生照片
-        const photoX = tableX + 130 // 20 + 130
-        const photoY = 30
-        const photoWidth = 38
-        const photoHeight = 38
-        // 画出头像边框
-        doc.rect(photoX, photoY, 40, 40, 'S')
-        // 获取图片
-        const img = new Image()
-        const defaultImg = require('@/assets/1.jpg')
-        img.crossOrigin = 'anonymous'
-        img.src = this.studentInfo.avatar || defaultImg
-        img.onload = () => {
-          doc.addImage(img, 'JPEG', photoX + 0.5, photoY + 0.5, photoWidth, photoHeight)
-          doc.save(this.studentInfo.name + ' - 学生信息.pdf')
-          // 关闭加载
-          loading.close()
-        }
+          // 第六行表格 获奖信息
+          doc.rect(tableX, tableY + cellHeight * 6, 35, cellHeight, 'S')
+          doc.rect(tableX + 35, tableY + cellHeight * 6, 135, cellHeight, 'S')
+          // 第六行数据
+          doc.text('获奖信息', this.getCenterX(doc, '获奖信息', tableX, 35), tableY + cellHeight * 6 + 7)
+          doc.text('无', this.getCenterX(doc, '无', tableX + 35, 135), tableY + cellHeight * 6 + 7)
+
+          // 第七行表格 中间显示'各科成绩平均分'
+          doc.rect(tableX, tableY + cellHeight * 7, 170, cellHeight, 'S')
+          // 第七行数据
+          doc.text('最新考试成绩', this.getCenterX(doc, '最新考试成绩', tableX, 170), tableY + cellHeight * 7 + 7)
+
+          // 第八 九 行 表格和数据
+          for (let i = 0; i < 9; i++) {
+            const width = i === 8 ? 18 : 19
+            // 第八行 课程标题
+            doc.rect(tableX + 19 * i, tableY + cellHeight * 8, width, cellHeight, 'S')
+            doc.text(this.scoreList[i].name, this.getCenterX(doc, this.scoreList[i].name, tableX + 19 * i, width), tableY + cellHeight * (8) + 7)
+            // 第九行 课程成绩
+            doc.rect(tableX + 19 * i, tableY + cellHeight * 9, width, cellHeight, 'S')
+            doc.text(this.scoreList[i].score.toString(), this.getCenterX(doc, this.scoreList[i].score.toString(), tableX + 19 * i, width), tableY + cellHeight * (9) + 7)
+          }
+
+          // 第十行 表格 平均分 总分 排名
+          doc.rect(tableX, tableY + cellHeight * 10, 29, cellHeight, 'S')
+          doc.rect(tableX + 29, tableY + cellHeight * 10, 29, cellHeight, 'S')
+          doc.rect(tableX + 58, tableY + cellHeight * 10, 29, cellHeight, 'S')
+          doc.rect(tableX + 87, tableY + cellHeight * 10, 29, cellHeight, 'S')
+          doc.rect(tableX + 116, tableY + cellHeight * 10, 25, cellHeight, 'S')
+          doc.rect(tableX + 141, tableY + cellHeight * 10, 29, cellHeight, 'S')
+          // 第十行 数据
+          doc.text('平均分', this.getCenterX(doc, '平均分', tableX, 29), tableY + cellHeight * 10 + 7)
+          doc.text(this.scoreList[9].score.toString(), this.getCenterX(doc, this.scoreList[9].score.toString(), tableX + 29, 29), tableY + cellHeight * 10 + 7)
+          doc.text('总分', this.getCenterX(doc, '总分', tableX + 58, 29), tableY + cellHeight * 10 + 7)
+          doc.text(this.scoreList[10].score.toString(), this.getCenterX(doc, this.scoreList[10].score.toString(), tableX + 87, 29), tableY + cellHeight * 10 + 7)
+          doc.text('排名', this.getCenterX(doc, '排名', tableX + 116, 25), tableY + cellHeight * 10 + 7)
+          const rankPositionX = this.getCenterX(doc, this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), tableX + 141, 29)
+          doc.text(this.studentInfo.rank.toString() + ' / ' + this.studentNum(this.studentInfo.class), rankPositionX, tableY + cellHeight * 10 + 7)
+
+          // 第十一行 表格 数据分析
+          doc.rect(tableX, tableY + cellHeight * 11, 170, cellHeight, 'S')
+          // 第十一行 数据
+          doc.text('数据分析', this.getCenterX(doc, '数据分析', tableX, 170), tableY + cellHeight * 11 + 7)
+
+          // 下面画出十字线 用于存放四个图表
+          doc.line(pageWidth / 2, tableY + cellHeight * 12, pageWidth / 2, tableY + cellHeight * 23)
+          doc.line(tableX, tableY + cellHeight * 17.5, tableX + 170, tableY + cellHeight * 17.5)
+          doc.line(tableX, tableY + cellHeight * 23, tableX + 170, tableY + cellHeight * 23)
+
+          // 底部 表格 数据分析内容
+          doc.rect(tableX, tableY + cellHeight * 12, 170, cellHeight * 14, 'S')
+          // 底部 数据
+          doc.text(this.dataAnalysis, tableX + 5, tableY + cellHeight * 23 + 7)
+
+          // 获取图表图片
+          this.$refs['barChart'].getChartImg()
+          this.$refs['pieChart'].getChartImg()
+          this.$refs['scatterChart'].getChartImg()
+          this.$refs['rankChart'].getChartImg()
+          // 创建一个图片
+          const barChartImg = new Image()
+          const pieChartImg = new Image()
+          const scatterChartImg = new Image()
+          const rankChartImg = new Image()
+          barChartImg.src = this.barChart
+          pieChartImg.src = this.pieChart
+          scatterChartImg.src = this.scatterChart
+          rankChartImg.src = this.rankChart
+
+          // 图表图片加载完成后添加到pdf
+          barChartImg.onload = () => {
+            doc.addImage(barChartImg, 'PNG', 24, 142, 74, 52)
+          }
+          pieChartImg.onload = () => {
+            doc.addImage(pieChartImg, 'PNG', 110, 142, 78, 52)
+          }
+          scatterChartImg.onload = () => {
+            doc.addImage(scatterChartImg, 'PNG', 24, 198, 78, 51)
+          }
+          rankChartImg.onload = () => {
+            doc.addImage(rankChartImg, 'PNG', 118, 198, 55, 51)
+          }
+
+          // 右上角 学生照片
+          const photoX = tableX + 130 // 20 + 130
+          const photoY = 30
+          const photoWidth = 38
+          const photoHeight = 38
+          // 画出头像边框
+          doc.rect(photoX, photoY, 40, 40, 'S')
+          // 获取图片
+          const img = new Image()
+          const defaultImg = require('@/assets/1.jpg')
+          img.crossOrigin = 'anonymous'
+          img.src = this.studentInfo.avatar || defaultImg
+          img.onload = () => {
+            doc.addImage(img, 'JPEG', photoX + 0.5, photoY + 0.5, photoWidth, photoHeight)
+            // 判断是单个导出还是批量导出
+            if (type === 'default') {
+              doc.save(this.studentInfo.name + ' - 学生信息.pdf')
+              // 关闭加载
+              this.loading.close()
+            } else if (type === 'batch') {
+              // 批量导出
+              this.pdf = doc.output('blob')
+              // promise完成
+              resolve()
+            }
+          }
+        })
       })
     },
     // 获取PDF文本居中的x坐标
@@ -618,6 +695,51 @@ export default {
       * 然后用表格宽度减去文本宽度，再除以2，即可得到文本居中时的X轴坐标值。
       * 最后将这个值加上表格的起始X轴坐标值x，即可得到文本在表格中的水平居中位置。
       *  */
+    },
+    // zip压缩 批量pdf下载
+    async createZip() {
+      this.dialogVisible = false
+      const zip = new JSZip()
+      // 存储学生姓名 用于重名处理
+      const names = []
+      this.centerDialogVisible = true
+      for (const item of this.selectExportList) {
+        const index = this.selectExportList.indexOf(item)
+        this.studentInfo = item
+        // 等待数据和pdf生成完毕
+        await this.getStudentScore()
+        await this.exportPDF('batch')
+        // 往zip里面添加文件 解决重名问题
+        if (names.includes(this.studentInfo.name)) {
+          zip.file(this.studentInfo.name + ' - 学生信息 - ' + index + '.pdf', this.pdf)
+        } else {
+          zip.file(this.studentInfo.name + ' - 学生信息.pdf', this.pdf)
+        }
+        // 存储学生姓名
+        names.push(item.name)
+        // 进度条
+        this.progress = Number(((index + 1) / this.selectExportList.length * 100).toFixed(0))
+        if (index === this.selectExportList.length - 1) {
+          zip.generateAsync({ type: 'blob' }).then((content) => {
+            saveAs(content, '学生信息.zip')
+            this.centerDialogVisible = false
+          })
+        }
+      }
+    },
+    // 获取选择批量导出的学生 全选或全不选
+    handleCheckAllChange(val) {
+      this.selectExportList = val ? this.studentList : []
+      this.isIndeterminate = false
+    },
+    // 选择批量导出的学生
+    handleCheckedCitiesChange(value) {
+      this.selectExportList = value
+      const checkedCount = value.length
+      // 是否已经全选
+      this.checkAll = checkedCount === this.studentList.length
+      // 选择了但没全部选择
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.studentList.length
     }
   }
 }
@@ -635,5 +757,16 @@ export default {
   align-items: center;
   width: 100%;
   height: 250px;
+}
+
+/*
+  el-table样式穿透 表格居中
+*/
+/deep/ .el-table th > .cell {
+  text-align: center;
+}
+
+/deep/ .el-table .cell {
+  text-align: center;
 }
 </style>
