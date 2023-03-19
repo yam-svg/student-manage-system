@@ -227,7 +227,7 @@
     >
       <el-progress :text-inside="true" :stroke-width="24" :percentage="progress" status="success" />
       <span slot="footer" class="dialog-footer">
-        <span style="font-size: 12px; color: gray">速度取决于计算机的性能</span>
+        <span style="font-size: 12px; color: gray">请保持前台不要切换页面，速度取决于计算机的性能</span>
       </span>
     </el-dialog>
   </div>
