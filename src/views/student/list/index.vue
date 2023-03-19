@@ -630,7 +630,8 @@ export default {
       const ws = createWs(
         student,
         fields,
-        titles
+        titles,
+        1
       )
       // 导出excel
       openDownloadDialog(sheet2blob(ws), '学生信息.xlsx')

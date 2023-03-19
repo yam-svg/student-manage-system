@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx'
 import XLSXStyle from 'xlsx-style'
 
-export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导出
+export function createWs(data, fields, titles, type = 2) { // type 2: 成绩导出 1 学生信息导出 3 核酸数据导出
   const ws = XLSX.utils.json_to_sheet(data, {
     header: fields
   })
