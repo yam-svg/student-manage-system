@@ -43,7 +43,7 @@ module.exports = {
     }
   },
   chainWebpack(config) {
-    config.externals({ './cptable': 'var cptable' })
+    config.externals({ './cptable': 'var cptable', 'BMapGL': 'BMapGL' })
     config.plugin('preload').tap(() => [
       {
         rel: 'preload',
