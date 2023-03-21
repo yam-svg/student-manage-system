@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from '@/store'
 
 Vue.use(Router)
 
@@ -196,6 +197,22 @@ const createRouter = () => new Router({
 })
 
 const router = createRouter()
+
+// 路由守卫 用于管理动态标签页 beforeEach是路由跳转前执行的钩子函数
+router.beforeEach((to, from, next) => {
+  // 获取动态标签页
+  const editableTabs = store.state.tabs.editableTabs
+  // 如果当前标签页为空或者当前标签页不在动态标签页中 并且不是登录页
+  if (editableTabs.length === 0 || !editableTabs.some(item => item.name === to.name)) {
+    if (to.path !== '/login') {
+      // 添加动态标签页
+      store.commit('tabs/setTableTabs', to)
+    }
+  }
+  // 设置当前标签页
+  store.commit('tabs/setTableTabsValue', to.path)
+  next()
+})
 
 export function resetRouter() {
   const newRouter = createRouter()

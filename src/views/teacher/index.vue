@@ -53,11 +53,6 @@
         <el-form-item label="联系电话" prop="phone">
           <el-input v-model.trim="form.phone" clearable size="mini" placeholder="请输入教师联系电话" />
         </el-form-item>
-        <el-form-item label="担任班主任" prop="class_id">
-          <el-select v-model="form.class_id" clearable size="mini" placeholder="非必选">
-            <el-option v-for="item in classList" :key="item.id" :label="item.name" :value="item.id" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="身份证号" prop="id_number">
           <el-input v-model.trim="form.id_number" clearable size="mini" placeholder="请输入教师身份证号" />
         </el-form-item>
@@ -91,7 +86,6 @@ export default {
         name: '',
         email: '',
         phone: '',
-        class_id: '',
         id_number: '',
         join_time: ''
       },
@@ -104,9 +98,6 @@ export default {
         ],
         phone: [
           { required: true, message: '请输入教师联系电话', trigger: 'blur' }
-        ],
-        class_id: [
-          { required: false, message: '请选择相应的班级', trigger: 'change' }
         ],
         id_number: [
           { required: true, message: '请输入教师身份证号', trigger: 'blur' }

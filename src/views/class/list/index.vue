@@ -124,12 +124,16 @@ export default {
     },
     // 更新班级
     updateClass() {
-      this.dialogVisible = false
-      // 添加老师名称字段
-      this.classInfo.master_name = this.teacherList.find(item => item.id === this.classInfo.master_id)?.name
-      classApi.updateClass(this.classInfo).then(res => {
-        this.$message.success(res.msg)
-        this.$store.dispatch('classL/getClassList')
+      this.$refs.form.validate(valid => {
+        if (valid) {
+          this.dialogVisible = false
+          // 添加老师名称字段
+          this.classInfo.master_name = this.teacherList.find(item => item.id === this.classInfo.master_id).name
+          classApi.updateClass(this.classInfo).then(res => {
+            this.$message.success(res.msg)
+            this.$store.dispatch('classL/getClassList')
+          })
+        }
       })
     },
     // 删除班级
