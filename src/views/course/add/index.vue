@@ -18,7 +18,12 @@
         <el-button type="warning" size="mini" @click="exportEmptyScore">导出空白成绩册</el-button>
       </el-form-item>
       <el-form-item class="right-float">
-        <el-button v-if="scoreData.length > 0" :type="isSave ? 'success' : 'danger'" size="mini" @click="saveScore">保存成绩</el-button>
+        <el-button v-if="scoreData.length > 0" type="success" size="mini" @click="randomScore">随机生成分数</el-button>
+      </el-form-item>
+      <el-form-item class="right-float">
+        <el-button v-if="scoreData.length > 0" :type="isSave ? 'success' : 'danger'" size="mini" @click="saveScore">
+          保存成绩
+        </el-button>
       </el-form-item>
     </el-form>
     <!--数据列表-->
@@ -134,12 +139,12 @@
       </el-table-column>
       <el-table-column label="总分">
         <template v-slot="scope">
-          <span v-text="total(scope.row)" />
+          <span v-text="total(scope.row)"/>
         </template>
       </el-table-column>
       <el-table-column label="平均分">
         <template v-slot="scope">
-          <span v-text="average(scope.row)" />
+          <span v-text="average(scope.row)"/>
         </template>
       </el-table-column>
     </el-table>
@@ -258,18 +263,6 @@ export default {
       // 获取成绩数据
       courseApi.getScoreData(params).then(res => {
         this.scoreData = res.data || []
-        // 随机添加分数
-      //   this.scoreData.forEach(item => {
-      //     item.chinese = Math.floor(Math.random() * 101)
-      //     item.mathematics = Math.floor(Math.random() * 101)
-      //     item.english = Math.floor(Math.random() * 101)
-      //     item.physics = Math.floor(Math.random() * 101)
-      //     item.chemistry = Math.floor(Math.random() * 101)
-      //     item.biology = Math.floor(Math.random() * 101)
-      //     item.politics = Math.floor(Math.random() * 101)
-      //     item.history = Math.floor(Math.random() * 101)
-      //     item.geography = Math.floor(Math.random() * 101)
-      //   })
       })
     },
     // 级联选择器值改变时触发
@@ -355,6 +348,21 @@ export default {
       const testTimeName = this.examBatchList.find(item => item.id === this.value[0]).title
       const className = this.classList.find(item => item.id === this.value[1]).name
       openDownloadDialog(sheet2blob(ws), testTimeName + '-' + className + '-空白成绩表.xlsx')
+    },
+    // 随机生成成绩
+    randomScore() {
+      // 随机添加分数
+      this.scoreData.forEach(item => {
+        item.chinese = Math.floor(Math.random() * 101)
+        item.mathematics = Math.floor(Math.random() * 101)
+        item.english = Math.floor(Math.random() * 101)
+        item.physics = Math.floor(Math.random() * 101)
+        item.chemistry = Math.floor(Math.random() * 101)
+        item.biology = Math.floor(Math.random() * 101)
+        item.politics = Math.floor(Math.random() * 101)
+        item.history = Math.floor(Math.random() * 101)
+        item.geography = Math.floor(Math.random() * 101)
+      })
     }
   },
   // 组件内路由守卫
