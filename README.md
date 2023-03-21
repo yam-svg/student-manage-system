@@ -47,7 +47,7 @@ VUE_APP_BASE_API = 'http://fanshu.xyz:8080'
 ```
 即可使项目连接到服务器的后端接口
 ### 13.常见问题
-项目启动中如有以下报错：
+1.项目启动中如有以下报错：
 ```
 This relative module was not found:
 
@@ -64,4 +64,5 @@ This relative module was not found:
 
 改成 var cpt = cptable; 就可以正确启动程序了
 ```
+2.项目中的百度地图做了限制，只能在本域名下使用，如需在其它地方使用，请自行申请并替换public/index.html中的百度地图密钥
 #### 如有疑问, 可在留言至gitee
