@@ -1,9 +1,6 @@
 <template>
   <div style="padding: 20px" class="student">
-    <div v-show="mapDialogVisible" class="map-main" @click.self="mapDialogVisible = false">
-      <span ref="map"></span>
-      <div id="map-container" />
-    </div>
+    <map-baidu v-show="mapDialogVisible" :address="mapAddress" @closeMap="closeMap" />
     <!--工具条-->
     <el-form ref="searchForm" :inline="true" :model="searchForm" class="demo-form-inline">
       <el-form-item>
@@ -81,9 +78,14 @@
       <el-table-column prop="father_name" label="监护人" width="100" />
       <el-table-column prop="father_tel" label="联系电话" width="120" />
       <el-table-column prop="address" label="住址" width="200">
+        <template #header>
+          <el-tooltip ref="tooltip" class="item" effect="light" content="点击图标可查看地图" placement="top">
+            <span>住址</span>
+          </el-tooltip>
+        </template>
         <template v-slot="{ row }">
           {{ row.address }}
-          <i class="el-icon-location-information location-style" @click="showMap(row.address)" />
+          <i class="el-icon-location-information location-style animate__animated animate__bounceInDown" @click="showMap(row.address)" />
         </template>
       </el-table-column>
       <el-table-column prop="id_number" label="身份证" width="180" />
@@ -188,10 +190,14 @@ import studentApi from '@/api/student'
 import { mapState } from 'vuex'
 import { createWs, sheet2blob, openDownloadDialog } from '@/utils/excel'
 import _ from 'lodash'
-import BMapGL from 'BMapGL'
+import mapBaidu from '@/components/Map'
+import 'animate.css'
 
 export default {
   name: 'StudentList',
+  components: {
+    mapBaidu
+  },
   data() {
     return {
       studentList: [],
@@ -218,6 +224,7 @@ export default {
       dialogVisible: false,
       importDialogVisible: false,
       mapDialogVisible: false,
+      mapAddress: '',
       excelTag: [
         { label: '姓名', key: 'name', checked: true },
         { label: '性别', key: 'sex', checked: true },
@@ -368,6 +375,14 @@ export default {
     }
     // 获取学生列表
     this.getStudentList()
+    setTimeout(() => {
+      // 显示tooltip提示
+      const tooltip = this.$refs.tooltip
+      tooltip.showPopper = true
+      setTimeout(() => {
+        tooltip.showPopper = false
+      }, 5000)
+    }, 500)
   },
   methods: {
     // 获取学生列表
@@ -747,11 +762,11 @@ export default {
     showMap(address) {
       this.mapDialogVisible = true
       // 整理地址
-      const addressArr = address.split(' ').join('')
-      this.$refs.map.innerHTML = addressArr
-      const map = new BMapGL.Map('map-container') // 创建Map实例
-      map.centerAndZoom(addressArr, 12) // 初始化地图,设置中心点坐标和地图级别
-      map.enableScrollWheelZoom(true) // 开启鼠标滚轮缩放
+      this.mapAddress = address.split(' ').join('')
+    },
+    // 关闭地图
+    closeMap() {
+      this.mapDialogVisible = false
     }
   }
 }
@@ -775,28 +790,5 @@ export default {
 }
 .location-style {
   cursor: pointer;
-}
-.map-main {
-  position: absolute;
-  width: 100%;
-  height: 100vh;
-  /*背景透明*/
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-}
-.map-main span {
-  display: block;
-  margin: 0 auto;
-  font-weight: bold;
-  color: #67c23a;
-  text-align: center;
-}
-#map-container {
-  overflow: hidden;
-  width: 70%;
-  height: 75%;
-  margin: 40px auto;
-  opacity: 1;
-  z-index: 999;
 }
 </style>

@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <map-baidu v-show="mapDialogVisible" :address="mapAddress" @closeMap="closeMap" />
     <!--工具条-->
     <el-form ref="form" inline label-width="80px">
       <el-form-item label="选择班级">
@@ -107,6 +108,7 @@
           联系地址
         </template>
         {{ studentInfo.address }}
+        <i class="el-icon-location-information location-style animate__animated animate__bounceInDown" @click="showMap" />
       </el-descriptions-item>
       <el-descriptions-item>
         <template slot="label">
@@ -247,10 +249,12 @@ import pieChart from '@/views/portfolio/pieChart'
 import rankChart from '@/views/portfolio/rankChart'
 import scatterChart from '@/views/portfolio/scatterChart'
 import _ from 'lodash'
+import mapBaidu from '@/components/Map'
+import 'animate.css'
 
 export default {
   name: 'Portfolio',
-  components: { barChart, pieChart, rankChart, scatterChart },
+  components: { barChart, pieChart, rankChart, scatterChart, mapBaidu },
   data() {
     return {
       // 搜索条件
@@ -283,7 +287,10 @@ export default {
       // 进度掉的进度
       progress: 0,
       isIndeterminate: false,
-      checkAll: false
+      checkAll: false,
+      // 是否显示地图
+      mapDialogVisible: false,
+      mapAddress: ''
     }
   },
   computed: {
@@ -745,6 +752,15 @@ export default {
       this.checkAll = checkedCount === this.studentList.length
       // 选择了但没全部选择
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.studentList.length
+    },
+    // 显示地图
+    showMap() {
+      this.mapDialogVisible = true
+      this.mapAddress = this.studentInfo?.address.split(' ').join('') || ''
+    },
+    // 关闭地图
+    closeMap() {
+      this.mapDialogVisible = false
     }
   }
 }
@@ -773,5 +789,9 @@ export default {
 
 /deep/ .el-table .cell {
   text-align: center;
+}
+
+.location-style {
+  cursor: pointer;
 }
 </style>
