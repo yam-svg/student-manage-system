@@ -58,6 +58,9 @@ export default {
   },
   methods: {
     submitForm() {
+      // 不允许修改
+      this.$message.error('不允许修改')
+      return
       this.$refs.form.validate((valid) => {
         if (valid) {
           // 对密码进行加密
