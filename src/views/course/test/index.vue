@@ -100,9 +100,6 @@ export default {
     },
     // 删除考试
     async delTest(row) {
-      // 不允许删除
-      this.$message.error('不允许删除')
-      return
       const res = await this.$confirm('此操作将永久删除该考试以及参加此次考试的学生成绩记录, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',

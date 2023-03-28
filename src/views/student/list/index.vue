@@ -423,12 +423,6 @@ export default {
     },
     // 彻底删除学生
     delDeep(row) {
-      // 不允许删除
-      this.$message({
-        type: 'error',
-        message: '数据不允许删除'
-      })
-      return
       this.$confirm('此操作将彻底删除该学生, 此操作不可逆, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -509,12 +503,6 @@ export default {
     },
     // 批量彻底删除学生
     batchDelDeep() {
-      // 不允许删除
-      this.$message({
-        type: 'error',
-        message: '数据不允许删除'
-      })
-      return
       if (this.ids.length === 0) {
         this.$message({
           type: 'warning',
