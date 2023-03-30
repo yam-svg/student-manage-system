@@ -124,13 +124,14 @@ export default {
       // 先存储客户端的ip和城市 防止第一次进入系统时没有登录记录
       const ipInfo = {
         ip: '',
-        city: ''
+        city: '***'
       }
       getIpInfo().then(res => {
         if (res.data.ip) {
           ipInfo.ip = (res.data.ip || '127.0.0.1').match(/\d+\.\d+\.\d+\.\d+/)[0]
           axios.get('https://ipapi.co/' + ipInfo.ip + '/json/').then(res => {
             ipInfo.city = res.data.city || '未知'
+          }).finally(() => {
             // 存储登录记录
             saveLoginLog(ipInfo).then(async() => {
               await this.$refs.lineCharts?.getLoginData()
