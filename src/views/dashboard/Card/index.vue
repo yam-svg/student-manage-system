@@ -93,7 +93,8 @@ export default {
     classPercent() {
       let res = ''
       this.classPercentList.forEach((item) => {
-        res += ' ' + item.name + '：' + item.percent.toFixed(2) + '% '
+        const percent = Number(item.percent.toFixed(2))
+        res += ' ' + item.name + '：' + Math.round(percent * 100) + '% '
       })
       return res
     },
