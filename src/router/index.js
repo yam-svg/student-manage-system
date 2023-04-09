@@ -189,6 +189,7 @@ export const constantRoutes = [
   // 找回密码
   {
     path: '/password',
+    hidden: true,
     component: () => import('@/views/setting/recover'),
     meta: { title: '找回密码', icon: 'el-icon-eleme' }
   },
