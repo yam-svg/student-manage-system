@@ -170,7 +170,7 @@
         ref="upload"
         class="upload-demo"
         drag
-        action="http://fanshu.xz:8080/api/student/importExcel"
+        action="http://43.143.209.247:8080/api/student/importExcel"
         :auto-upload="false"
         :on-success="handleSuccess"
         :before-upload="beforeAvatarUpload"
