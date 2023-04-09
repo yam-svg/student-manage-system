@@ -44,8 +44,8 @@
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
       <div class="tips">
-        <span style="margin-right:20px;">用户名: admin</span>
-        <span> 密码: 123456</span>
+        <span>初始用户名: admin</span>
+        <router-link to="password" style="color:#fff;text-decoration-line: underline">忘记密码</router-link>
       </div>
 
     </el-form>
@@ -86,9 +86,6 @@ export default {
       redirect: undefined
     }
   },
-  mounted() {
-    this.handleLogin()
-  },
   watch: {
     $route: {
       handler: function(route) {
@@ -96,6 +93,9 @@ export default {
       },
       immediate: true
     }
+  },
+  mounted() {
+    this.handleLogin()
   },
   methods: {
     showPwd() {
@@ -196,6 +196,8 @@ $light_gray:#eee;
   }
 
   .tips {
+    display: flex;
+    justify-content: space-between;
     font-size: 14px;
     color: #fff;
     margin-bottom: 10px;

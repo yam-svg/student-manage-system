@@ -186,6 +186,66 @@ export const constantRoutes = [
     ]
   },
 
+  // 找回密码
+  {
+    path: '/password',
+    component: () => import('@/views/setting/recover'),
+    meta: { title: '找回密码', icon: 'el-icon-eleme' }
+  },
+
+  // 其他项目
+  {
+    path: '/other',
+    component: Layout,
+    redirect: '/other/setting',
+    meta: { title: '其他项目', icon: 'el-icon-medal-1' },
+    children: [
+      //   {
+      //   path: 'sph',
+      //   component: () => import('@/views/other/index'),
+      //   meta: { title: '购物商城', icon: 'el-icon-goods' }
+      // }, {
+      //   path: 'sphBack',
+      //   component: () => import('@/views/other/index'),
+      //   meta: { title: '商城管理', icon: 'el-icon-brush' }
+      // }, {
+      //   path: 'guigu',
+      //   component: () => import('@/views/other/index'),
+      //   meta: { title: '硅谷课堂', icon: 'el-icon-video-camera' }
+      // },
+      {
+        path: 'tank',
+        component: () => import('@/views/other/index'),
+        meta: { title: '坦克游戏', icon: 'el-icon-coordinate' }
+      }
+      // , {
+      //   path: 'gitee',
+      //   component: () => import('@/views/other/index'),
+      //   meta: { title: '仓库地址', icon: 'el-icon-receiving' }
+      // }
+    ]
+  },
+  // chatGPT特别页面
+  {
+    path: '/open',
+    component: Layout,
+    meta: { title: 'chatGPT', icon: 'el-icon-chat-round' },
+    hidden: true,
+    children: [
+      {
+        path: '/chatGPT',
+        component: () => import('@/views/chatGPT/index'),
+        meta: { title: 'chatGPT', icon: 'el-icon-chat-round' }
+      }
+    ]
+  },
+  // 留言
+  {
+    path: '/message',
+    component: () => import('@/views/message/index'),
+    meta: { title: '留言', icon: 'el-icon-eleme' }
+  },
+
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]

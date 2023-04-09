@@ -70,7 +70,7 @@
           {{ getAge(row.id_number) }}
         </template>
       </el-table-column>
-      <el-table-column label="班级" width="95">
+      <el-table-column label="年级" width="95">
         <template v-slot="{row}">
           <el-tag :type="getTagType(row.class)">{{ getClass(row.class) }}</el-tag>
         </template>
