@@ -2,6 +2,9 @@
   <div id="container">
     <div class="form-list">
       <el-form ref="form" :model="form" label-width="140px" :rules="rules" inline>
+        <el-form-item v-if="!isLogin" label="请输入用户名" prop="user">
+          <el-input v-model="form.user" clearable placeholder="请输入账号"></el-input>
+        </el-form-item>
         <el-form-item label="请输入邮箱" prop="email">
           <el-input v-model="form.email" clearable placeholder="请输入账号绑定的邮箱"></el-input>
         </el-form-item>
@@ -43,13 +46,18 @@ export default {
     }
     return {
       disable: false,
+      isLogin: true,
       form: {
+        user: '',
         email: '',
         emailCode: '',
         newPassword: '',
         confirmPassword: ''
       },
       rules: {
+        user: [
+          { required: true, message: '请输入账号', trigger: 'blur' }
+        ],
         email: [
           { required: true, message: '请输入账号绑定的邮箱', trigger: 'blur' }
         ],
@@ -66,11 +74,19 @@ export default {
       }
     }
   },
+  mounted() {
+    this.isLogin = !!this.$store.state.user.token
+    if (this.isLogin) {
+      const vuex = JSON.parse(localStorage.getItem('vuex'))
+      console.log(vuex)
+      this.form.user = vuex.user.name
+    }
+  },
   methods: {
     // 获取邮箱验证码 防抖
     getEmailCode: _.debounce(async function() {
       if (this.form.email) {
-        const res = await adminApi.getEmailCode({ email: this.form.email })
+        const res = await adminApi.getEmailCode({ user: this.form.user, email: this.form.email })
         if (res.code === 20000) {
           this.$message.success(res.msg)
           // 按钮不可点击
@@ -99,7 +115,8 @@ export default {
         if (valid) {
           const res = await adminApi.retrievePassword(this.form)
           this.$message.success(res.msg)
-          this.$router.push('/login')
+          await this.$store.dispatch('user/logout')
+          this.$router.push(`/login?redirect=${this.$route.fullPath}`)
         }
       })
     }

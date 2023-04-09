@@ -66,12 +66,13 @@ export default {
           pass.newPassword = crypto.createHash('md5').update(this.form.newPassword).digest('hex')
           pass.confirmPassword = crypto.createHash('md5').update(this.form.confirmPassword).digest('hex')
           // 调用修改密码接口
-          userApi.updatePassword(pass).then(res => {
+          userApi.updatePassword(pass).then(async res => {
             this.$message({
               message: res.msg,
               type: 'success'
             })
-            this.$router.push({ path: '/' })
+            await this.$store.dispatch('user/logout')
+            this.$router.push(`/login?redirect=${this.$route.fullPath}`)
           })
         } else {
           this.$message.error('请检查输入')
