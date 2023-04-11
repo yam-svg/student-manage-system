@@ -129,19 +129,34 @@ export const constantRoutes = [
     }]
   },
 
-  // 疫情管理
+  // 学院管理
   {
-    path: '/epidemic',
+    path: '/college',
     component: Layout,
-    redirect: '/Epidemic',
-    meta: { title: '疫情管理', icon: 'el-icon-chat-round' },
+    redirect: '/college/list',
+    meta: { title: '学院管理', icon: 'el-icon-s-help' },
     children: [{
       path: 'list',
-      name: 'EpidemicList',
-      component: () => import('@/views/epidemic/index'),
-      meta: { title: '疫情管理', icon: 'el-icon-warning' }
+      name: 'CollegeList',
+      component: () => import('@/views/college/index'),
+      meta: { title: '学院管理', icon: 'el-icon-s-platform' }
     }]
   },
+
+  // 专业管理
+  {
+    path: '/major',
+    component: Layout,
+    redirect: '/major/list',
+    meta: { title: '专业管理', icon: 'el-icon-s-help' },
+    children: [{
+      path: 'list',
+      name: 'MajorList',
+      component: () => import('@/views/major/index'),
+      meta: { title: '专业管理', icon: 'el-icon-s-unfold' }
+    }]
+  },
+
   // 学生档案
   {
     path: '/portfolio',
@@ -153,6 +168,20 @@ export const constantRoutes = [
       name: 'PortfolioList',
       component: () => import('@/views/portfolio/index'),
       meta: { title: '学生档案', icon: 'el-icon-finished' }
+    }]
+  },
+
+  // 疫情管理
+  {
+    path: '/epidemic',
+    component: Layout,
+    redirect: '/Epidemic',
+    meta: { title: '疫情管理', icon: 'el-icon-chat-round' },
+    children: [{
+      path: 'list',
+      name: 'EpidemicList',
+      component: () => import('@/views/epidemic/index'),
+      meta: { title: '疫情管理', icon: 'el-icon-warning' }
     }]
   },
 

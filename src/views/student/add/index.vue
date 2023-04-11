@@ -22,6 +22,28 @@
           <el-radio :label="0">无</el-radio>
         </el-radio-group>
       </el-form-item>
+      <el-form-item label="学院" prop="college">
+        <el-select v-model="student.college" @change="handleMajorChange" placeholder="请选择学院">
+          <el-option
+            v-for="item in collegeList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="专业" prop="major_id">
+        <el-select v-model="student.major_id" placeholder="请选择专业">
+          <el-option
+            v-for="item in majorList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="监护人姓名" prop="father_name">
         <el-input v-model.trim="student.father_name" />
       </el-form-item>
@@ -72,11 +94,17 @@
 import studentApi from '@/api/student'
 import { mapState } from 'vuex'
 import { regionData, CodeToText } from 'element-china-area-data'
+import { getCollegeList } from '@/api/college'
+import { getMajorListByCollegeId } from '@/api/major'
 
 export default {
   name: 'AddStudent',
   data() {
     return {
+      // 学院列表
+      collegeList: [],
+      // 专业列表
+      majorList: [],
       student: {
         avatar: '',
         name: '',
@@ -86,6 +114,8 @@ export default {
         father_tel: '',
         id_number: '',
         address: '',
+        college: null,
+        major_id: null,
         create_time: '',
         remark: 0
       },
@@ -94,6 +124,12 @@ export default {
         name: [
           { required: true, message: '请输入姓名', trigger: 'blur' },
           { min: 2, max: 5, message: '长度在 2 到 5 个字符', trigger: 'blur' }
+        ],
+        college: [
+          { required: true, message: '请选择学院', trigger: 'blur' }
+        ],
+        major_id: [
+          { required: true, message: '请选择专业', trigger: 'blur' }
         ],
         sex: [
           { required: true, message: '请选择性别', trigger: 'blur' }
@@ -163,15 +199,31 @@ export default {
     if (this.$route.params.id) {
       this.getStudentInfo()
     }
+    // 获取学院列表
+    this.getCollegeList()
   },
   methods: {
     // 获取学生信息
     getStudentInfo() {
       studentApi.getStudentInfo(this.$route.params.id).then(res => {
         this.student = res.data
+        // 获取专业列表
+        this.getMajorList()
       })
       // 对时间进行格式化
       this.student.create_time = new Date(this.student.create_time)
+    },
+    // 获取学院列表
+    getCollegeList() {
+      getCollegeList().then(res => {
+        this.collegeList = res.data
+      }).catch()
+    },
+    // 获取专业列表
+    getMajorList() {
+      getMajorListByCollegeId(this.student.college).then(res => {
+        this.majorList = res.data
+      }).catch()
     },
     // 保存按钮
     save() {
@@ -245,6 +297,11 @@ export default {
     bindAddress() {
       const temp = this.selectAddress || this.student.address
       this.student.address = temp + this.tempAddress
+    },
+    // 学院选择器回调
+    handleMajorChange() {
+      this.student.major_id = ''
+      this.getMajorList()
     }
   }
 }

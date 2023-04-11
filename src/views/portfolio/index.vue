@@ -131,6 +131,27 @@
         </template>
         {{ createTime(studentInfo.create_time) }}
       </el-descriptions-item>
+      <el-descriptions-item>
+        <template slot="label">
+          <i class="el-icon-c-scale-to-original" />
+          所属学院
+        </template>
+        {{ getCollegeName(studentInfo.college) }}
+      </el-descriptions-item>
+      <el-descriptions-item>
+        <template slot="label">
+          <i class="el-icon-takeaway-box" />
+          所学专业
+        </template>
+        {{ getMajorName(studentInfo.major_id) }}
+      </el-descriptions-item>
+      <el-descriptions-item>
+        <template slot="label">
+          <i class="el-icon-attract" />
+          获奖信息
+        </template>
+        无
+      </el-descriptions-item>
     </el-descriptions>
     <!--成绩-->
     <el-descriptions
@@ -251,12 +272,18 @@ import scatterChart from '@/views/portfolio/scatterChart'
 import _ from 'lodash'
 import mapBaidu from '@/components/Map'
 import 'animate.css'
+import { getCollegeList } from '@/api/college'
+import { getMajorListAll } from '@/api/major'
 
 export default {
   name: 'Portfolio',
   components: { barChart, pieChart, rankChart, scatterChart, mapBaidu },
   data() {
     return {
+      // 学院列表
+      collegeList: [],
+      // 专业列表
+      majorList: [],
       // 搜索条件
       searchForm: {
         class: null,
@@ -295,6 +322,30 @@ export default {
   },
   computed: {
     ...mapState('classL', ['classList']),
+    // 根据学院id获取学院名称
+    getCollegeName() {
+      return (collegeId) => {
+        let collegeName = ''
+        this.collegeList.forEach(item => {
+          if (item.id === collegeId) {
+            collegeName = item.name
+          }
+        })
+        return collegeName
+      }
+    },
+    // 根据专业id获取专业名称
+    getMajorName() {
+      return (majorId) => {
+        let majorName = ''
+        this.majorList.forEach(item => {
+          if (item.id === majorId) {
+            majorName = item.name
+          }
+        })
+        return majorName
+      }
+    },
     // 计算班级
     className() {
       return (id) => {
@@ -418,6 +469,10 @@ export default {
     studentApi.getProvince().then(res => {
       this.provinceList = res.data
     })
+    // 获取学院列表
+    this.getCollegeList()
+    // 获取专业列表
+    this.getMajorList()
   },
   methods: {
     // 获取学生列表
@@ -440,6 +495,18 @@ export default {
           this.studentInfo = this.studentList[0]
         }
       })
+    },
+    // 获取学院列表
+    getCollegeList() {
+      getCollegeList().then(res => {
+        this.collegeList = res.data
+      }).catch()
+    },
+    // 获取专业列表
+    getMajorList() {
+      getMajorListAll().then(res => {
+        this.majorList = res.data
+      }).catch()
     },
     // 选择学生
     selectStudentInfo() {
@@ -566,19 +633,23 @@ export default {
           doc.text('入学时间', this.getCenterX(doc, '入学时间', tableX + 60, 20), tableY + cellHeight * 4 + 7)
           doc.text(this.createTime(this.studentInfo.create_time).toString(), this.getCenterX(doc, this.createTime(this.studentInfo.create_time).toString(), tableX + 80, 50), tableY + cellHeight * 4 + 7)
 
-          // 第五行表格 家庭地址
-          doc.rect(tableX, tableY + cellHeight * 5, 35, cellHeight, 'S')
-          doc.rect(tableX + 35, tableY + cellHeight * 5, 135, cellHeight, 'S')
+          // 第五行表格 学院 专业
+          doc.rect(tableX, tableY + cellHeight * 5, 20, cellHeight, 'S')
+          doc.rect(tableX + 20, tableY + cellHeight * 5, 60, cellHeight, 'S')
+          doc.rect(tableX + 80, tableY + cellHeight * 5, 20, cellHeight, 'S')
+          doc.rect(tableX + 100, tableY + cellHeight * 5, 70, cellHeight, 'S')
           // 第五行数据
-          doc.text('家庭地址', this.getCenterX(doc, '家庭地址', tableX, 35), tableY + cellHeight * 5 + 7)
-          doc.text(this.studentInfo.address, this.getCenterX(doc, this.studentInfo.address, tableX + 35, 135), tableY + cellHeight * 5 + 7)
+          doc.text('学院', this.getCenterX(doc, '学院', tableX, 20), tableY + cellHeight * 5 + 7)
+          doc.text(this.getCollegeName(this.studentInfo.college), this.getCenterX(doc, this.getCollegeName(this.studentInfo.college), tableX + 20, 60), tableY + cellHeight * 5 + 7)
+          doc.text('专业', this.getCenterX(doc, '专业', tableX + 80, 20), tableY + cellHeight * 5 + 7)
+          doc.text(this.getMajorName(this.studentInfo.major_id), this.getCenterX(doc, this.getMajorName(this.studentInfo.major_id), tableX + 100, 70), tableY + cellHeight * 5 + 7)
 
-          // 第六行表格 获奖信息
+          // 第六行表格 家庭地址
           doc.rect(tableX, tableY + cellHeight * 6, 35, cellHeight, 'S')
           doc.rect(tableX + 35, tableY + cellHeight * 6, 135, cellHeight, 'S')
-          // 第六行数据
-          doc.text('获奖信息', this.getCenterX(doc, '获奖信息', tableX, 35), tableY + cellHeight * 6 + 7)
-          doc.text('无', this.getCenterX(doc, '无', tableX + 35, 135), tableY + cellHeight * 6 + 7)
+          // 第五行数据
+          doc.text('家庭地址', this.getCenterX(doc, '家庭地址', tableX, 35), tableY + cellHeight * 6 + 7)
+          doc.text(this.studentInfo.address, this.getCenterX(doc, this.studentInfo.address, tableX + 35, 135), tableY + cellHeight * 6 + 7)
 
           // 第七行表格 中间显示'各科成绩平均分'
           doc.rect(tableX, tableY + cellHeight * 7, 170, cellHeight, 'S')

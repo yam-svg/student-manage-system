@@ -21,7 +21,7 @@
       <el-form-item label="学生姓名">
         <el-input v-model.trim="searchForm.name" size="mini" clearable placeholder="请输入学生姓名" @input="search" />
       </el-form-item>
-      <el-form-item label="班级">
+      <el-form-item label="年级">
         <el-select v-model.trim="searchForm.class" size="mini" clearable placeholder="请选择班级" @change="search">
           <el-option v-for="item in classList" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
@@ -75,6 +75,16 @@
           <el-tag :type="getTagType(row.class)">{{ getClass(row.class) }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="学院" width="95">
+        <template v-slot="{row}">
+          {{ getCollegeName(row.college) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="专业" width="95">
+        <template v-slot="{row}">
+          {{ getMajorName(row.major_id) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="father_name" label="监护人" width="100" />
       <el-table-column prop="father_tel" label="联系电话" width="120" />
       <el-table-column prop="address" label="住址" width="200">
@@ -88,7 +98,7 @@
           <i class="el-icon-location-information location-style animate__animated animate__bounceInDown" @click="showMap(row.address)" />
         </template>
       </el-table-column>
-      <el-table-column prop="id_number" label="身份证" width="180" />
+      <el-table-column prop="id_number" label="身份证" width="170" />
       <el-table-column label="入学时间" width="100">
         <template v-slot="{row}">
           {{ getEnterTime(row.create_time) }}
@@ -187,6 +197,8 @@
 
 <script>
 import studentApi from '@/api/student'
+import { getCollegeList } from '@/api/college'
+import { getMajorListAll } from '@/api/major'
 import { mapState } from 'vuex'
 import { createWs, sheet2blob, openDownloadDialog } from '@/utils/excel'
 import _ from 'lodash'
@@ -200,7 +212,12 @@ export default {
   },
   data() {
     return {
+      // 学生列表
       studentList: [],
+      // 学院列表
+      collegeList: [],
+      // 专业列表
+      majorList: [],
       // 选择导出的学生列表
       exportStudentList: [],
       inputWidth: '2',
@@ -242,6 +259,30 @@ export default {
     }
   },
   computed: {
+    // 根据学院id获取学院名称
+    getCollegeName() {
+      return (collegeId) => {
+        let collegeName = ''
+        this.collegeList.forEach(item => {
+          if (item.id === collegeId) {
+            collegeName = item.name
+          }
+        })
+        return collegeName
+      }
+    },
+    // 根据专业id获取专业名称
+    getMajorName() {
+      return (majorId) => {
+        let majorName = ''
+        this.majorList.forEach(item => {
+          if (item.id === majorId) {
+            majorName = item.name
+          }
+        })
+        return majorName
+      }
+    },
     // 从vuex中获取班级列表
     ...mapState('classL', ['classList']),
     // 根据身份证号码计算年龄
@@ -375,6 +416,10 @@ export default {
     }
     // 获取学生列表
     this.getStudentList()
+    // 获取学院列表
+    this.getCollegeList()
+    // 获取专业列表
+    this.getMajorList()
     setTimeout(() => {
       // 显示tooltip提示
       const tooltip = this.$refs.tooltip
@@ -394,6 +439,18 @@ export default {
       }, this.searchForm).then(res => {
         this.studentList = res.data
         this.total = res.total
+      }).catch()
+    },
+    // 获取学院列表
+    getCollegeList() {
+      getCollegeList().then(res => {
+        this.collegeList = res.data
+      }).catch()
+    },
+    // 获取专业列表
+    getMajorList() {
+      getMajorListAll().then(res => {
+        this.majorList = res.data
       }).catch()
     },
     // 编辑学生
