@@ -45,3 +45,14 @@ export function addMajor(data) {
     data
   })
 }
+
+// 删除专业
+export function deleteMajor(majorId) {
+  return request({
+    url: BASE_API + '/delete',
+    method: 'delete',
+    params: {
+      majorId
+    }
+  })
+}

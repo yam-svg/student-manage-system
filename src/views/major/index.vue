@@ -22,7 +22,7 @@
       :title="majorInfo.id ? '编辑专业' : '添加专业'"
       :visible.sync="dialogVisible"
       width="30%"
-      before-close="handleClose"
+      :before-close="handleClose"
     >
       <el-form ref="form" :model="majorInfo" :rules="rules" label-width="80px">
         <el-form-item label="专业名称" prop="major">
@@ -144,9 +144,13 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '删除成功!'
+        const id = row.id.split('-')[1]
+        majorApi.deleteMajor(id).then(res => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.getMajorList()
         })
       })
     },
