@@ -115,10 +115,6 @@ export default {
           this.$store.dispatch('user/login', this.loginForm).then(() => {
             // 保存用户信息到本地
             localStorage.setItem('vuex', JSON.stringify({ user: { name: this.loginForm.username }}))
-            // 动态添加路由
-            if (this.loginForm.username === 'admin') {
-              this.$store.dispatch('permission/GenerateRoutes')
-            }
             this.$router.push({ path: this.redirect || '/student/list' })
             this.loading = false
           }).catch(() => {
