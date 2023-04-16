@@ -12,7 +12,7 @@
         :collapse-transition="false"
         mode="vertical"
       >
-        <sidebar-item v-for="route in routes" :key="route.path" :item="route" :base-path="route.path" />
+        <sidebar-item v-for="route in routeList" :key="route.path" :item="route" :base-path="route.path" />
       </el-menu>
     </el-scrollbar>
   </div>
@@ -26,6 +26,11 @@ import variables from '@/styles/variables.scss'
 
 export default {
   components: { SidebarItem, Logo },
+  data() {
+    return {
+      routeList: []
+    }
+  },
   computed: {
     ...mapGetters([
       'sidebar'
@@ -50,6 +55,22 @@ export default {
     },
     isCollapse() {
       return !this.sidebar.opened
+    }
+  },
+  mounted() {
+    // 管理员特有路由
+    const adminRoutes = ['/college', '/major']
+    // 获取当前用户的角色
+    const vuex = localStorage.getItem('vuex')
+    const role = JSON.parse(vuex).user.name
+    // 根据角色过滤路由
+    if (role === 'admin') {
+      this.routeList = this.routes
+    } else {
+      this.routeList = this.routes.filter(route => {
+        // 返回不在管理员特有路由中的路由
+        return !adminRoutes.includes(route.path)
+      })
     }
   }
 }

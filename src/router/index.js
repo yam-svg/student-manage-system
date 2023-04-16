@@ -239,11 +239,22 @@ const router = createRouter()
 router.beforeEach((to, from, next) => {
   // 获取动态标签页
   const editableTabs = store.state.tabs.editableTabs
+  // 获取角色
+  const vuex = localStorage.getItem('vuex')
+  const role = JSON.parse(vuex).user.name
   // 如果当前标签页为空或者当前标签页不在动态标签页中 并且不是登录页
   if (editableTabs.length === 0 || !editableTabs.some(item => item.name === to.name)) {
     if (to.path !== '/login') {
       // 添加动态标签页
       store.commit('tabs/setTableTabs', to)
+    }
+  }
+  // 如果角色不是admin 并且访问的是学院管理或者专业管理
+  if (role !== 'admin') {
+    if (to.path.indexOf('/college') >= 0 || to.path.indexOf('/major') >= 0) {
+      // 跳转到404页面
+      console.log(to.path)
+      next('/404')
     }
   }
   // 设置当前标签页
