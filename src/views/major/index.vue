@@ -99,6 +99,22 @@ export default {
     handleSave() {
       this.$refs.form.validate((valid) => {
         if (valid) {
+          // 判断专业名称是否已经存在
+          let flag = false
+          this.majorList.forEach(item => {
+            item.children.some(i => {
+              if (i.major === this.majorInfo.major) {
+                flag = true
+              }
+            })
+          })
+          if (flag) {
+            this.$message({
+              type: 'warning',
+              message: '该专业已存在!'
+            })
+            return
+          }
           if (this.majorInfo.id) {
             // 编辑
             majorApi.updateMajor(this.majorInfo).then(res => {

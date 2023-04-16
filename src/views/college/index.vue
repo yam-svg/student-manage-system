@@ -88,6 +88,14 @@ export default {
     submitEdit() {
       this.$refs['collegeInfo'].validate(valid => {
         if (valid) {
+          // 判断是否已经存在
+          const isExist = this.collegeList.some(item => {
+            return item.name === this.collegeInfo.name && item.id !== this.collegeInfo.id
+          })
+          if (isExist) {
+            this.$message.error('学院名称已存在')
+            return
+          }
           // 添加
           if (!this.collegeInfo.id) {
             collegeApi.addCollege(this.collegeInfo).then(res => {
