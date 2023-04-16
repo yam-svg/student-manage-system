@@ -66,6 +66,7 @@ export default {
       timer: null,
       active: 1,
       form: {
+        user: '',
         email: '',
         emailCode: ''
       },
@@ -79,6 +80,11 @@ export default {
       }
     }
   },
+  mounted() {
+    // 获取用户名
+    const vuex = JSON.parse(localStorage.getItem('vuex'))
+    this.form.user = vuex.user.name
+  },
   methods: {
     // 获取邮箱验证码 防抖
     getEmailCode: _.debounce(async function() {
@@ -87,7 +93,7 @@ export default {
         if (this.active === 2) {
           codeVerify = 1
         }
-        const res = await adminApi.getEmailCode({ email: this.form.email, codeVerify })
+        const res = await adminApi.getEmailCode({ user: this.form.user, email: this.form.email, codeVerify })
         if (res.code === 20000) {
           this.$message.success(res.msg)
           // 按钮不可点击
@@ -122,7 +128,7 @@ export default {
       await this.$refs.form.validate(async valid => {
         if (valid) {
           if (this.active === 1) {
-            const res = await adminApi.confirmEmailCode(this.form)
+            const res = await adminApi.confirmEmailCode({ email: this.form.email, emailCode: this.form.emailCode })
             if (res.code === 20000) {
               this.$message.success(res.msg)
               this.active++
@@ -131,10 +137,8 @@ export default {
               this.$nextTick(() => {
                 this.$refs.timer1.$el.innerHTML = '获取验证码'
               })
-              this.form = {
-                email: '',
-                emailCode: ''
-              }
+              this.form.emailCode = ''
+              this.form.email = ''
             } else {
               this.$message.error(res.msg)
             }
