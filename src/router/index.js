@@ -240,8 +240,8 @@ router.beforeEach((to, from, next) => {
   // 获取动态标签页
   const editableTabs = store.state.tabs.editableTabs
   // 获取角色
-  const vuex = localStorage.getItem('vuex')
-  const role = JSON.parse(vuex).user.name
+  const vuex = JSON.parse(localStorage.getItem('vuex'))
+  const role = vuex?.user?.name || 'other'
   // 如果当前标签页为空或者当前标签页不在动态标签页中 并且不是登录页
   if (editableTabs.length === 0 || !editableTabs.some(item => item.name === to.name)) {
     if (to.path !== '/login') {
