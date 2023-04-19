@@ -69,6 +69,21 @@ export default {
       }
     }
   },
+  beforeRouteEnter(to, from, next) {
+    // 获取角色
+    const vuex = JSON.parse(localStorage.getItem('vuex'))
+    const role = vuex?.user?.name || 'other'
+    // 如果角色不是admin 并且访问的是学院管理或者专业管理
+    if (role !== 'admin') {
+      if (to.path.indexOf('/college') >= 0 || to.path.indexOf('/major') >= 0) {
+        // 跳转到404页面
+        console.log(to.path)
+        next('/404')
+      }
+    } else {
+      next()
+    }
+  },
   mounted() {
     this.getCollegeList()
   },

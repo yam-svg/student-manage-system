@@ -95,7 +95,7 @@ export default {
     }
   },
   mounted() {
-    this.handleLogin()
+    // this.handleLogin()
   },
   methods: {
     showPwd() {
